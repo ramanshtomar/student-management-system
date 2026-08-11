@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Student Management Dashboard</title>
+
+    <!-- Main CSS -->
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- ======================================
+         SIDEBAR
+    ======================================= -->
+
+    <aside class="sidebar">
+
+
+        <!-- LOGO -->
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                SM
+            </div>
+
+            <div>
+
+                <h2>
+                    Student<span>Hub</span>
+                </h2>
+
+                <p>
+                    Management System
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="sidebar-nav">
+
+
+            <p class="nav-title">
+                MENU
+            </p>
+
+
+            <a
+                href="#"
+                class="nav-item active"
+            >
+
+                <span>⌂</span>
+
+                Dashboard
+
+            </a>
+
+
+            <a
+                href="#studentDirectory"
+                class="nav-item"
+            >
+
+                <span>👥</span>
+
+                Students
+
+            </a>
+
+
+            <a
+                href="#studentDirectory"
+                class="nav-item"
+            >
+
+                <span>🎓</span>
+
+                Courses
+
+            </a>
+
+
+            <a
+                href="#statistics"
+                class="nav-item"
+            >
+
+                <span>📊</span>
+
+                Analytics
+
+            </a>
+
+
+
+            <p class="nav-title second-title">
+                SYSTEM
+            </p>
+
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+
+                <span>⚙</span>
+
+                Settings
+
+            </a>
+
+
+        </nav>
+
+
+
+        <!-- SYSTEM STATUS -->
+
+        <div class="sidebar-bottom">
+
+            <div class="system-status">
+
+                <span class="status-dot"></span>
+
+                <div>
+
+                    <strong>
+                        System Online
+                    </strong>
+
+                    <small>
+                        All services running
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </aside>
+
+
+
+    <!-- ======================================
+         MAIN CONTENT
+    ======================================= -->
+
+    <main class="main-content">
+
+
+        <!-- ==================================
+             TOP BAR
+        =================================== -->
+
+        <header class="topbar">
+
+
+            <div>
+
+                <p class="dashboard-label">
+                    OVERVIEW
+                </p>
+
+                <h1>
+                    Dashboard
+                </h1>
+
+            </div>
+
+
+
+            <!-- ADMIN PROFILE -->
+
+            <div class="profile">
+
+
+                <div class="profile-avatar">
+                    R
+                </div>
+
+
+                <div class="profile-info">
+
+                    <strong>
+                        Admin
+                    </strong>
+
+                    <span>
+                        Student Manager
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- ==================================
+             STATISTICS
+        =================================== -->
+
+        <section
+            class="stats-grid"
+            id="statistics"
+        >
+
+
+            <!-- TOTAL STUDENTS -->
+
+            <div class="stat-card">
+
+
+                <div class="stat-icon">
+                    👥
+                </div>
+
+
+                <div>
+
+                    <p>
+                        Total Students
+                    </p>
+
+                    <h2 id="totalStudents">
+                        0
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- TOTAL COURSES -->
+
+            <div class="stat-card">
+
+
+                <div class="stat-icon">
+                    🎓
+                </div>
+
+
+                <div>
+
+                    <p>
+                        Total Courses
+                    </p>
+
+                    <h2 id="totalCourses">
+                        0
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- SYSTEM STATUS -->
+
+            <div class="stat-card">
+
+
+                <div class="stat-icon">
+                    ⚡
+                </div>
+
+
+                <div>
+
+                    <p>
+                        System Status
+                    </p>
+
+                    <h2 class="online">
+                        Online
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- ==================================
+             ADD STUDENT
+        =================================== -->
+
+        <section class="form-container">
+
+
+            <div class="section-heading">
+
+
+                <div>
+
+                    <p class="section-label">
+                        MANAGEMENT
+                    </p>
+
+                    <h2>
+                        Add New Student
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <form id="studentForm">
+
+
+                <input
+                    type="text"
+                    id="name"
+                    placeholder="Student name"
+                    required
+                >
+
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Email address"
+                    required
+                >
+
+
+                <input
+                    type="text"
+                    id="course"
+                    placeholder="Course"
+                    required
+                >
+
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                >
+
+                    + Add Student
+
+                </button>
+
+
+            </form>
+
+
+        </section>
+
+
+
+        <!-- ==================================
+             ANALYTICS
+        =================================== -->
+
+        <section
+            class="analytics-section"
+            id="analytics"
+        >
+
+
+            <div class="section-heading">
+
+
+                <p class="section-label">
+                    ANALYTICS
+                </p>
+
+
+                <h2>
+                    Student Overview
+                </h2>
+
+
+                <p class="section-description">
+                    Course-wise distribution of students
+                </p>
+
+
+            </div>
+
+
+
+            <!-- CHART -->
+
+            <div class="chart-container">
+
+                <canvas
+                    id="courseChart"
+                ></canvas>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- ==================================
+             STUDENT DIRECTORY
+        =================================== -->
+
+        <section
+            class="students-container"
+            id="studentDirectory"
+        >
+
+
+            <!-- DIRECTORY HEADER -->
+
+            <div class="student-list-header">
+
+
+                <div>
+
+
+                    <p class="section-label">
+                        DATABASE
+                    </p>
+
+
+                    <h2>
+                        Student Directory
+                    </h2>
+
+
+                    <p class="section-description">
+                        Manage all registered students
+                    </p>
+
+
+                </div>
+
+
+
+                <!-- SEARCH + FILTER -->
+
+                <div class="filters">
+
+
+                    <input
+                        type="search"
+                        id="searchStudent"
+                        placeholder="🔎 Search student..."
+                    >
+
+
+                    <select
+                        id="courseFilter"
+                    >
+
+                        <option value="">
+                            All Courses
+                        </option>
+
+                    </select>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- STUDENT TABLE -->
+
+            <div class="table-wrapper">
+
+
+                <table>
+
+
+                    <thead>
+
+
+                        <tr>
+
+
+                            <th>
+                                ID
+                            </th>
+
+
+                            <th>
+                                Student
+                            </th>
+
+
+                            <th>
+                                Email
+                            </th>
+
+
+                            <th>
+                                Course
+                            </th>
+
+
+                            <th>
+                                Actions
+                            </th>
+
+
+                        </tr>
+
+
+                    </thead>
+
+
+
+                    <tbody
+                        id="studentTableBody"
+                    >
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- ==================================
+             FOOTER
+        =================================== -->
+
+        <footer>
+
+            StudentHub • Student Management System
+
+            <span>
+                Built with HTML • CSS • JavaScript • Node.js • MySQL
+            </span>
+
+        </footer>
+
+
+    </main>
+
+
+
+    <!-- ======================================
+         CHART.JS
+    ======================================= -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/chart.js"
+    ></script>
+
+
+
+    <!-- ======================================
+         OUR JAVASCRIPT
+    ======================================= -->
+
+    <script
+        src="./script.js"
+    ></script>
+
+
+</body>
+
+</html>
