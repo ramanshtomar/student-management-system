@@ -1,113 +1,218 @@
-// ========================================
+// =====================================================
 // STUDENT MANAGEMENT SYSTEM
-// SCRIPT.JS
-// ========================================
+// FINAL DASHBOARD JAVASCRIPT
+// =====================================================
 
 const API_URL = "http://localhost:3000/api/students";
 
-let allStudents = [];
-let courseChart = null;
+let students = [];
 
 
-// ========================================
-// TOAST NOTIFICATION
-// ========================================
+// =====================================================
+// INITIALIZE
+// =====================================================
 
-function showToast(message, type = "success") {
+document.addEventListener("DOMContentLoaded", () => {
 
-    const oldToast =
-        document.getElementById("toast");
+    setupNavigation();
+    setupStudentForm();
+    setupSearch();
 
-    if (oldToast) {
-        oldToast.remove();
+    updateLiveDateTime();
+    setInterval(updateLiveDateTime, 1000);
+
+    loadStudents();
+
+});
+
+
+// =====================================================
+// LIVE DATE / TIME / GREETING
+// =====================================================
+
+function updateLiveDateTime() {
+
+    const now = new Date();
+
+    const hour = now.getHours();
+
+    let greeting;
+
+    if (hour < 12) {
+        greeting = "Good Morning ☀️";
+    }
+    else if (hour < 17) {
+        greeting = "Good Afternoon 🌤️";
+    }
+    else {
+        greeting = "Good Evening 🌙";
     }
 
 
-    const toast =
-        document.createElement("div");
+    const greetingElement =
+        document.getElementById("greeting");
 
-    toast.id = "toast";
+    const dateElement =
+        document.getElementById("liveDate");
 
-    toast.className =
-        `toast toast-${type}`;
+    const timeElement =
+        document.getElementById("liveTime");
 
 
-    let icon = "✓";
+    if (greetingElement) {
 
-    if (type === "error") {
-        icon = "!";
+        greetingElement.textContent =
+            greeting;
+
     }
 
-    if (type === "warning") {
-        icon = "!";
+
+    if (dateElement) {
+
+        dateElement.textContent =
+            now.toLocaleDateString(
+                "en-IN",
+                {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+
     }
 
 
-    toast.innerHTML = `
+    if (timeElement) {
 
-        <div class="toast-icon">
-            ${icon}
-        </div>
-
-        <div class="toast-message">
-            ${message}
-        </div>
-
-        <button
-            class="toast-close"
-            onclick="closeToast()"
-        >
-            ×
-        </button>
-
-    `;
-
-
-    document.body.appendChild(toast);
-
-
-    setTimeout(() => {
-
-        toast.classList.add(
-            "toast-hide"
-        );
-
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-
-    }, 3000);
-
-}
-
-
-// ========================================
-// CLOSE TOAST
-// ========================================
-
-function closeToast() {
-
-    const toast =
-        document.getElementById("toast");
-
-    if (toast) {
-
-        toast.classList.add(
-            "toast-hide"
-        );
-
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
+        timeElement.textContent =
+            now.toLocaleTimeString(
+                "en-IN",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                }
+            );
 
     }
 
 }
 
 
-// ========================================
-// LOAD ALL STUDENTS
-// ========================================
+// =====================================================
+// NAVIGATION
+// =====================================================
+
+function setupNavigation() {
+
+    const navItems =
+        document.querySelectorAll(".nav-item");
+
+    navItems.forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const section =
+                button.dataset.section;
+
+            if (!section) {
+                return;
+            }
+
+            showSection(section);
+
+        });
+
+    });
+
+}
+
+
+function showSection(sectionName) {
+
+    const sections =
+        document.querySelectorAll(".page-section");
+
+    sections.forEach(section => {
+
+        section.classList.remove(
+            "active-section"
+        );
+
+    });
+
+
+    const selectedSection =
+        document.getElementById(
+            sectionName + "Section"
+        );
+
+
+    if (selectedSection) {
+
+        selectedSection.classList.add(
+            "active-section"
+        );
+
+    }
+
+
+    const navItems =
+        document.querySelectorAll(".nav-item");
+
+    navItems.forEach(item => {
+
+        item.classList.remove("active");
+
+        if (
+            item.dataset.section ===
+            sectionName
+        ) {
+
+            item.classList.add("active");
+
+        }
+
+    });
+
+
+    const title =
+        document.getElementById("pageTitle");
+
+
+    const titles = {
+
+        dashboard: "Dashboard",
+        students: "Students",
+        analytics: "Analytics",
+        settings: "Settings"
+
+    };
+
+
+    if (title) {
+
+        title.textContent =
+            titles[sectionName] ||
+            "Dashboard";
+
+    }
+
+
+    if (sectionName === "analytics") {
+
+        updateAnalytics();
+
+    }
+
+}
+
+
+// =====================================================
+// LOAD STUDENTS
+// =====================================================
 
 async function loadStudents() {
 
@@ -126,35 +231,26 @@ async function loadStudents() {
         }
 
 
-        const students =
+        students =
             await response.json();
 
 
-        allStudents = students;
+        renderStudents(students);
+        renderOverview(students);
+        updateStatistics();
+        updateCourseFilter();
 
 
-        updateDashboardStats();
-
-        populateCourseFilter();
-
-        displayStudents(
-            allStudents
-        );
-
-        updateCourseChart();
-
-
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Load students error:",
             error
         );
 
-
         showToast(
-            "Unable to load students",
-            "error"
+            "Unable to load students"
         );
 
     }
@@ -162,11 +258,11 @@ async function loadStudents() {
 }
 
 
-// ========================================
-// DISPLAY STUDENTS
-// ========================================
+// =====================================================
+// RENDER STUDENT TABLE
+// =====================================================
 
-function displayStudents(students) {
+function renderStudents(data) {
 
     const tableBody =
         document.getElementById(
@@ -182,28 +278,113 @@ function displayStudents(students) {
     tableBody.innerHTML = "";
 
 
-    if (students.length === 0) {
+    if (data.length === 0) {
 
         tableBody.innerHTML = `
 
             <tr>
 
-                <td
-                    colspan="5"
-                    class="empty-state"
-                >
+                <td colspan="5"
+                    style="text-align:center;padding:30px;color:#68728b">
 
-                    <div class="empty-icon">
-                        🔍
-                    </div>
+                    No students found
 
-                    <strong>
-                        No students found
-                    </strong>
+                </td>
 
-                    <small>
-                        Try changing your search or filter.
-                    </small>
+            </tr>
+
+        `;
+
+        updateRecordCount(0);
+
+        return;
+
+    }
+
+
+    data.forEach(student => {
+
+        const row =
+            document.createElement("tr");
+
+
+        row.innerHTML = `
+
+            <td>${escapeHTML(student.id)}</td>
+
+            <td>${escapeHTML(student.name)}</td>
+
+            <td>${escapeHTML(student.email)}</td>
+
+            <td>${escapeHTML(student.course)}</td>
+
+            <td>
+
+                <button
+                    class="edit-btn"
+                    onclick="editStudent(${student.id})">
+
+                    Edit
+
+                </button>
+
+                <button
+                    class="delete-btn"
+                    onclick="deleteStudent(${student.id})">
+
+                    Delete
+
+                </button>
+
+            </td>
+
+        `;
+
+
+        tableBody.appendChild(row);
+
+    });
+
+
+    updateRecordCount(data.length);
+
+}
+
+
+// =====================================================
+// OVERVIEW TABLE
+// =====================================================
+
+function renderOverview(data) {
+
+    const tableBody =
+        document.getElementById(
+            "overviewTableBody"
+        );
+
+
+    if (!tableBody) {
+        return;
+    }
+
+
+    tableBody.innerHTML = "";
+
+
+    const recent =
+        data.slice(-5).reverse();
+
+
+    if (recent.length === 0) {
+
+        tableBody.innerHTML = `
+
+            <tr>
+
+                <td colspan="4"
+                    style="text-align:center;padding:30px">
+
+                    No students yet
 
                 </td>
 
@@ -216,7 +397,7 @@ function displayStudents(students) {
     }
 
 
-    students.forEach(student => {
+    recent.forEach(student => {
 
         const row =
             document.createElement("tr");
@@ -224,55 +405,13 @@ function displayStudents(students) {
 
         row.innerHTML = `
 
-            <td>
-                ${student.id}
-            </td>
+            <td>${escapeHTML(student.id)}</td>
 
-            <td>
+            <td>${escapeHTML(student.name)}</td>
 
-                <div class="student-name">
+            <td>${escapeHTML(student.email)}</td>
 
-                    <div class="student-avatar">
-                        ${getInitials(student.name)}
-                    </div>
-
-                    <span>
-                        ${escapeHTML(student.name)}
-                    </span>
-
-                </div>
-
-            </td>
-
-            <td>
-                ${escapeHTML(student.email)}
-            </td>
-
-            <td>
-
-                <span class="course-badge">
-                    ${escapeHTML(student.course)}
-                </span>
-
-            </td>
-
-            <td>
-
-                <button
-                    class="edit-btn"
-                    onclick="editStudent(${student.id})"
-                >
-                    Edit
-                </button>
-
-                <button
-                    class="delete-btn"
-                    onclick="deleteStudent(${student.id})"
-                >
-                    Delete
-                </button>
-
-            </td>
+            <td>${escapeHTML(student.course)}</td>
 
         `;
 
@@ -284,287 +423,66 @@ function displayStudents(students) {
 }
 
 
-// ========================================
-// HTML SAFETY
-// ========================================
+// =====================================================
+// ADD STUDENT
+// =====================================================
 
-function escapeHTML(value) {
+function setupStudentForm() {
 
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
-}
-
-
-// ========================================
-// GET INITIALS
-// ========================================
-
-function getInitials(name) {
-
-    const words =
-        String(name)
-            .trim()
-            .split(/\s+/);
-
-
-    if (words.length === 1) {
-
-        return words[0]
-            .substring(0, 2)
-            .toUpperCase();
-
-    }
-
-
-    return (
-        words[0][0] +
-        words[1][0]
-    ).toUpperCase();
-
-}
-
-
-// ========================================
-// DASHBOARD STATISTICS
-// ========================================
-
-function updateDashboardStats() {
-
-    const totalStudents =
+    const form =
         document.getElementById(
-            "totalStudents"
+            "studentForm"
         );
 
 
-    const totalCourses =
-        document.getElementById(
-            "totalCourses"
-        );
-
-
-    if (totalStudents) {
-
-        totalStudents.textContent =
-            allStudents.length;
-
-    }
-
-
-    if (totalCourses) {
-
-        const courses =
-            new Set(
-                allStudents.map(
-                    student =>
-                        student.course
-                )
-            );
-
-
-        totalCourses.textContent =
-            courses.size;
-
-    }
-
-}
-
-
-// ========================================
-// COURSE FILTER
-// ========================================
-
-function populateCourseFilter() {
-
-    const filter =
-        document.getElementById(
-            "courseFilter"
-        );
-
-
-    if (!filter) {
+    if (!form) {
         return;
     }
 
 
-    const currentValue =
-        filter.value;
-
-
-    filter.innerHTML = `
-
-        <option value="">
-            All Courses
-        </option>
-
-    `;
-
-
-    const courses =
-        [
-            ...new Set(
-                allStudents.map(
-                    student =>
-                        student.course
-                )
-            )
-        ];
-
-
-    courses.sort();
-
-
-    courses.forEach(course => {
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-
-        option.value = course;
-
-        option.textContent = course;
-
-
-        filter.appendChild(
-            option
-        );
-
-    });
-
-
-    filter.value =
-        currentValue;
-
-}
-
-
-// ========================================
-// SEARCH + FILTER
-// ========================================
-
-function filterStudents() {
-
-    const searchInput =
-        document.getElementById(
-            "searchStudent"
-        );
-
-
-    const courseFilter =
-        document.getElementById(
-            "courseFilter"
-        );
-
-
-    const search =
-        searchInput
-            ? searchInput.value
-                .toLowerCase()
-                .trim()
-            : "";
-
-
-    const course =
-        courseFilter
-            ? courseFilter.value
-            : "";
-
-
-    const filteredStudents =
-        allStudents.filter(
-            student => {
-
-                const name =
-                    String(student.name)
-                        .toLowerCase();
-
-
-                const email =
-                    String(student.email)
-                        .toLowerCase();
-
-
-                const matchesSearch =
-
-                    name.includes(search) ||
-                    email.includes(search);
-
-
-                const matchesCourse =
-
-                    !course ||
-                    student.course === course;
-
-
-                return (
-                    matchesSearch &&
-                    matchesCourse
-                );
-
-            }
-        );
-
-
-    displayStudents(
-        filteredStudents
+    form.addEventListener(
+        "submit",
+        addStudent
     );
 
 }
 
-
-// ========================================
-// ADD STUDENT
-// ========================================
 
 async function addStudent(event) {
 
     event.preventDefault();
 
 
+    const name =
+        document.getElementById(
+            "name"
+        ).value.trim();
+
+
+    const email =
+        document.getElementById(
+            "email"
+        ).value.trim();
+
+
+    const course =
+        document.getElementById(
+            "course"
+        ).value.trim();
+
+
+    if (!name || !email || !course) {
+
+        showToast(
+            "Please fill all fields"
+        );
+
+        return;
+
+    }
+
+
     try {
-
-        const name =
-            document
-                .getElementById("name")
-                .value
-                .trim();
-
-
-        const email =
-            document
-                .getElementById("email")
-                .value
-                .trim();
-
-
-        const course =
-            document
-                .getElementById("course")
-                .value
-                .trim();
-
-
-        if (
-            !name ||
-            !email ||
-            !course
-        ) {
-
-            showToast(
-                "Please fill all fields",
-                "warning"
-            );
-
-            return;
-
-        }
-
 
         const response =
             await fetch(
@@ -596,39 +514,34 @@ async function addStudent(event) {
 
             throw new Error(
                 data.message ||
-                data.error ||
                 "Failed to add student"
             );
 
         }
 
 
-        document
-            .getElementById(
-                "studentForm"
-            )
-            .reset();
+        document.getElementById(
+            "studentForm"
+        ).reset();
+
+
+        showToast(
+            "Student added successfully ✓"
+        );
 
 
         await loadStudents();
 
 
-        showToast(
-            "Student added successfully!"
-        );
+        showSection("students");
 
+    }
+    catch (error) {
 
-    } catch (error) {
-
-        console.error(
-            "Add student error:",
-            error
-        );
-
+        console.error(error);
 
         showToast(
-            error.message,
-            "error"
+            "Error adding student"
         );
 
     }
@@ -636,304 +549,111 @@ async function addStudent(event) {
 }
 
 
-// ========================================
+// =====================================================
 // EDIT STUDENT
-// ========================================
+// =====================================================
 
 async function editStudent(id) {
 
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/${id}`
-            );
-
-
-        const student =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                student.message ||
-                "Student not found"
-            );
-
-        }
-
-
-        const oldBox =
-            document.getElementById(
-                "editStudentBox"
-            );
-
-
-        if (oldBox) {
-            oldBox.remove();
-        }
-
-
-        const editBox =
-            document.createElement(
-                "div"
-            );
-
-
-        editBox.id =
-            "editStudentBox";
-
-
-        editBox.innerHTML = `
-
-            <div class="edit-container">
-
-                <div class="edit-header">
-
-                    <div>
-
-                        <p class="section-label">
-                            STUDENT MANAGEMENT
-                        </p>
-
-                        <h2>
-                            Edit Student
-                        </h2>
-
-                    </div>
-
-                    <button
-                        class="modal-close"
-                        id="closeEditBtn"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-
-                <label>
-                    Student Name
-                </label>
-
-                <input
-                    type="text"
-                    id="editName"
-                    value="${escapeHTML(student.name)}"
-                >
-
-
-                <label>
-                    Email Address
-                </label>
-
-                <input
-                    type="email"
-                    id="editEmail"
-                    value="${escapeHTML(student.email)}"
-                >
-
-
-                <label>
-                    Course
-                </label>
-
-                <input
-                    type="text"
-                    id="editCourse"
-                    value="${escapeHTML(student.course)}"
-                >
-
-
-                <div class="edit-actions">
-
-                    <button
-                        id="cancelEditBtn"
-                        class="cancel-btn"
-                    >
-                        Cancel
-                    </button>
-
-
-                    <button
-                        id="saveEditBtn"
-                        class="save-btn"
-                    >
-                        Save Changes
-                    </button>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        document.body.appendChild(
-            editBox
+    const student =
+        students.find(
+            s => Number(s.id) === Number(id)
         );
 
 
-        document
-            .getElementById(
-                "saveEditBtn"
-            )
-            .addEventListener(
-                "click",
-                () => updateStudent(id)
-            );
-
-
-        document
-            .getElementById(
-                "cancelEditBtn"
-            )
-            .addEventListener(
-                "click",
-                closeEditModal
-            );
-
-
-        document
-            .getElementById(
-                "closeEditBtn"
-            )
-            .addEventListener(
-                "click",
-                closeEditModal
-            );
-
-
-        editBox.addEventListener(
-            "click",
-            function(event) {
-
-                if (
-                    event.target ===
-                    editBox
-                ) {
-
-                    closeEditModal();
-
-                }
-
-            }
-        );
-
-
-        document.addEventListener(
-            "keydown",
-            handleEscapeKey
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Edit student error:",
-            error
-        );
-
+    if (!student) {
 
         showToast(
-            "Unable to open student editor",
-            "error"
+            "Student not found"
         );
 
+        return;
+
     }
+
+
+    document.getElementById(
+        "editId"
+    ).value = student.id;
+
+
+    document.getElementById(
+        "editName"
+    ).value = student.name;
+
+
+    document.getElementById(
+        "editEmail"
+    ).value = student.email;
+
+
+    document.getElementById(
+        "editCourse"
+    ).value = student.course;
+
+
+    document.getElementById(
+        "editModal"
+    ).classList.add("show");
 
 }
 
 
-// ========================================
+// =====================================================
 // CLOSE EDIT MODAL
-// ========================================
+// =====================================================
 
 function closeEditModal() {
 
-    const editBox =
+    document.getElementById(
+        "editModal"
+    ).classList.remove("show");
+
+}
+
+
+// =====================================================
+// SAVE EDIT
+// =====================================================
+
+async function saveEdit() {
+
+    const id =
         document.getElementById(
-            "editStudentBox"
+            "editId"
+        ).value;
+
+
+    const name =
+        document.getElementById(
+            "editName"
+        ).value.trim();
+
+
+    const email =
+        document.getElementById(
+            "editEmail"
+        ).value.trim();
+
+
+    const course =
+        document.getElementById(
+            "editCourse"
+        ).value.trim();
+
+
+    if (!name || !email || !course) {
+
+        showToast(
+            "Please fill all fields"
         );
 
-
-    if (editBox) {
-
-        editBox.remove();
+        return;
 
     }
 
-
-    document.removeEventListener(
-        "keydown",
-        handleEscapeKey
-    );
-
-}
-
-
-// ========================================
-// ESCAPE KEY
-// ========================================
-
-function handleEscapeKey(event) {
-
-    if (
-        event.key === "Escape"
-    ) {
-
-        closeEditModal();
-
-    }
-
-}
-
-
-// ========================================
-// UPDATE STUDENT
-// ========================================
-
-async function updateStudent(id) {
 
     try {
-
-        const name =
-            document
-                .getElementById("editName")
-                .value
-                .trim();
-
-
-        const email =
-            document
-                .getElementById("editEmail")
-                .value
-                .trim();
-
-
-        const course =
-            document
-                .getElementById("editCourse")
-                .value
-                .trim();
-
-
-        if (
-            !name ||
-            !email ||
-            !course
-        ) {
-
-            showToast(
-                "Please fill all fields",
-                "warning"
-            );
-
-            return;
-
-        }
-
 
         const response =
             await fetch(
@@ -966,7 +686,7 @@ async function updateStudent(id) {
             throw new Error(
                 data.message ||
                 data.error ||
-                "Error updating student"
+                "Update failed"
             );
 
         }
@@ -975,25 +695,23 @@ async function updateStudent(id) {
         closeEditModal();
 
 
-        await loadStudents();
-
-
         showToast(
-            "Student updated successfully!"
+            "Student updated successfully ✓"
         );
 
 
-    } catch (error) {
+        await loadStudents();
+
+    }
+    catch (error) {
 
         console.error(
-            "Update student error:",
+            "Edit error:",
             error
         );
 
-
         showToast(
-            error.message,
-            "error"
+            "Error updating student"
         );
 
     }
@@ -1001,29 +719,26 @@ async function updateStudent(id) {
 }
 
 
-// ========================================
+// =====================================================
 // DELETE STUDENT
-// ========================================
+// =====================================================
 
 async function deleteStudent(id) {
 
     const student =
-        allStudents.find(
-            item =>
-                Number(item.id) ===
-                Number(id)
+        students.find(
+            s => Number(s.id) === Number(id)
         );
 
 
-    const studentName =
-        student
-            ? student.name
-            : "this student";
+    if (!student) {
+        return;
+    }
 
 
     const confirmed =
-        await showDeleteModal(
-            studentName
+        confirm(
+            `Delete ${student.name}?`
         );
 
 
@@ -1051,32 +766,29 @@ async function deleteStudent(id) {
 
             throw new Error(
                 data.message ||
-                data.error ||
-                "Error deleting student"
+                "Delete failed"
             );
 
         }
 
 
-        await loadStudents();
-
-
         showToast(
-            "Student deleted successfully!"
+            "Student deleted successfully ✓"
         );
 
 
-    } catch (error) {
+        await loadStudents();
+
+    }
+    catch (error) {
 
         console.error(
             "Delete error:",
             error
         );
 
-
         showToast(
-            error.message,
-            "error"
+            "Error deleting student"
         );
 
     }
@@ -1084,375 +796,474 @@ async function deleteStudent(id) {
 }
 
 
-// ========================================
-// DELETE CONFIRMATION MODAL
-// ========================================
+// =====================================================
+// SEARCH + FILTER
+// =====================================================
 
-function showDeleteModal(studentName) {
+function setupSearch() {
 
-    return new Promise(resolve => {
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
 
-        const modal =
+
+    const courseFilter =
+        document.getElementById(
+            "courseFilter"
+        );
+
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            applyFilters
+        );
+
+    }
+
+
+    if (courseFilter) {
+
+        courseFilter.addEventListener(
+            "change",
+            applyFilters
+        );
+
+    }
+
+}
+
+
+function applyFilters() {
+
+    const search =
+        document.getElementById(
+            "searchInput"
+        ).value
+            .trim()
+            .toLowerCase();
+
+
+    const course =
+        document.getElementById(
+            "courseFilter"
+        ).value;
+
+
+    const filtered =
+        students.filter(student => {
+
+            const matchesSearch =
+
+                student.name
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                student.email
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                student.course
+                    .toLowerCase()
+                    .includes(search);
+
+
+            const matchesCourse =
+
+                course === "all" ||
+                student.course === course;
+
+
+            return (
+                matchesSearch &&
+                matchesCourse
+            );
+
+        });
+
+
+    renderStudents(filtered);
+
+}
+
+
+// =====================================================
+// COURSE FILTER OPTIONS
+// =====================================================
+
+function updateCourseFilter() {
+
+    const filter =
+        document.getElementById(
+            "courseFilter"
+        );
+
+
+    if (!filter) {
+        return;
+    }
+
+
+    const current =
+        filter.value;
+
+
+    const courses =
+        [...new Set(
+            students.map(
+                student => student.course
+            )
+        )]
+        .sort();
+
+
+    filter.innerHTML = `
+
+        <option value="all">
+            All Courses
+        </option>
+
+    `;
+
+
+    courses.forEach(course => {
+
+        const option =
             document.createElement(
-                "div"
+                "option"
             );
 
 
-        modal.className =
-            "confirmation-modal";
+        option.value = course;
+
+        option.textContent = course;
 
 
-        modal.innerHTML = `
+        filter.appendChild(option);
 
-            <div class="confirmation-box">
-
-                <div class="warning-icon">
-                    !
-                </div>
+    });
 
 
-                <h2>
-                    Delete Student?
-                </h2>
+    if (
+        courses.includes(current)
+    ) {
+
+        filter.value = current;
+
+    }
+
+}
 
 
-                <p>
-                    Are you sure you want to delete
-                    <strong>
-                        ${escapeHTML(studentName)}
-                    </strong>?
-                </p>
+// =====================================================
+// STATISTICS
+// =====================================================
+
+function updateStatistics() {
+
+    const total =
+        students.length;
 
 
-                <small>
-                    This action cannot be undone.
-                </small>
+    const courses =
+        new Set(
+            students.map(
+                student => student.course
+            )
+        ).size;
 
 
-                <div class="confirmation-actions">
-
-                    <button
-                        class="cancel-btn"
-                        id="cancelDelete"
-                    >
-                        Cancel
-                    </button>
+    const totalStudents =
+        document.getElementById(
+            "totalStudents"
+        );
 
 
-                    <button
-                        class="confirm-delete-btn"
-                        id="confirmDelete"
-                    >
-                        Delete Student
-                    </button>
+    const totalCourses =
+        document.getElementById(
+            "totalCourses"
+        );
 
-                </div>
+
+    if (totalStudents) {
+
+        totalStudents.textContent =
+            total;
+
+    }
+
+
+    if (totalCourses) {
+
+        totalCourses.textContent =
+            courses;
+
+    }
+
+
+    const analyticsStudents =
+        document.getElementById(
+            "analyticsStudents"
+        );
+
+
+    const analyticsCourses =
+        document.getElementById(
+            "analyticsCourses"
+        );
+
+
+    const analyticsRecords =
+        document.getElementById(
+            "analyticsRecords"
+        );
+
+
+    if (analyticsStudents) {
+
+        analyticsStudents.textContent =
+            total;
+
+    }
+
+
+    if (analyticsCourses) {
+
+        analyticsCourses.textContent =
+            courses;
+
+    }
+
+
+    if (analyticsRecords) {
+
+        analyticsRecords.textContent =
+            total;
+
+    }
+
+}
+
+
+// =====================================================
+// ANALYTICS
+// =====================================================
+
+function updateAnalytics() {
+
+    const overview =
+        document.getElementById(
+            "courseOverview"
+        );
+
+
+    if (!overview) {
+        return;
+    }
+
+
+    if (students.length === 0) {
+
+        overview.innerHTML = `
+
+            <div style="
+                padding:35px;
+                text-align:center;
+                color:#68728b;
+            ">
+
+                No student data available yet.
 
             </div>
 
         `;
 
-
-        document.body.appendChild(
-            modal
-        );
-
-
-        function finish(result) {
-
-            modal.classList.add(
-                "modal-closing"
-            );
-
-
-            setTimeout(() => {
-
-                modal.remove();
-
-                resolve(result);
-
-            }, 200);
-
-        }
-
-
-        document
-            .getElementById(
-                "cancelDelete"
-            )
-            .addEventListener(
-                "click",
-                () => finish(false)
-            );
-
-
-        document
-            .getElementById(
-                "confirmDelete"
-            )
-            .addEventListener(
-                "click",
-                () => finish(true)
-            );
-
-
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    modal
-                ) {
-
-                    finish(false);
-
-                }
-
-            }
-        );
-
-    });
-
-}
-
-
-// ========================================
-// COURSE-WISE ANALYTICS
-// ========================================
-
-function updateCourseChart() {
-
-    const canvas =
-        document.getElementById(
-            "courseChart"
-        );
-
-
-    if (!canvas) {
         return;
+
     }
 
 
     const courseCounts = {};
 
 
-    allStudents.forEach(
-        student => {
+    students.forEach(student => {
 
-            const course =
-                student.course ||
-                "Unknown";
+        const course =
+            student.course || "Unknown";
 
 
-            courseCounts[course] =
-                (courseCounts[course] || 0) + 1;
+        courseCounts[course] =
+            (courseCounts[course] || 0) + 1;
 
-        }
-    );
+    });
 
 
-    const courses =
-        Object.keys(courseCounts);
+    const total =
+        students.length;
 
 
-    const studentCounts =
-        Object.values(courseCounts);
+    overview.innerHTML = "";
 
 
-    if (courseChart) {
+    Object.entries(courseCounts)
+        .sort((a,b) => b[1] - a[1])
+        .forEach(([course, count]) => {
 
-        courseChart.destroy();
+            const percentage =
+                Math.round(
+                    (count / total) * 100
+                );
 
-        courseChart = null;
 
-    }
+            const row =
+                document.createElement(
+                    "div"
+                );
 
 
-    if (
-        courses.length === 0 ||
-        typeof Chart === "undefined"
-    ) {
+            row.className =
+                "course-row";
 
-        return;
 
-    }
+            row.innerHTML = `
 
+                <div class="course-info">
 
-    courseChart =
-        new Chart(
-            canvas,
-            {
+                    <span>
+                        ${escapeHTML(course)}
+                    </span>
 
-                type: "bar",
+                    <span>
+                        ${count} student${count !== 1 ? "s" : ""}
+                        · ${percentage}%
+                    </span>
 
-                data: {
+                </div>
 
-                    labels: courses,
+                <div class="progress">
 
-                    datasets: [
+                    <div
+                        class="progress-bar"
+                        style="width:${percentage}%">
+                    </div>
 
-                        {
+                </div>
 
-                            label:
-                                "Students",
+            `;
 
-                            data:
-                                studentCounts,
 
-                            borderWidth: 0,
+            overview.appendChild(row);
 
-                            borderRadius: 8,
-
-                            backgroundColor:
-                                "rgba(124, 140, 255, 0.65)"
-
-                        }
-
-                    ]
-
-                },
-
-
-                options: {
-
-                    responsive: true,
-
-                    maintainAspectRatio: false,
-
-
-                    animation: {
-
-                        duration: 700
-
-                    },
-
-
-                    plugins: {
-
-                        legend: {
-
-                            labels: {
-
-                                color:
-                                    "#ffffff"
-
-                            }
-
-                        }
-
-                    },
-
-
-                    scales: {
-
-                        x: {
-
-                            ticks: {
-
-                                color:
-                                    "#9ba5bf"
-
-                            },
-
-                            grid: {
-
-                                color:
-                                    "rgba(255,255,255,0.04)"
-
-                            }
-
-                        },
-
-
-                        y: {
-
-                            beginAtZero: true,
-
-                            ticks: {
-
-                                color:
-                                    "#9ba5bf",
-
-                                precision: 0
-
-                            },
-
-                            grid: {
-
-                                color:
-                                    "rgba(255,255,255,0.05)"
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-        );
+        });
 
 }
 
 
-// ========================================
-// PAGE LOAD
-// ========================================
+// =====================================================
+// RECORD COUNT
+// =====================================================
+
+function updateRecordCount(count) {
+
+    const element =
+        document.getElementById(
+            "recordCount"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        `${count} Record${count !== 1 ? "s" : ""}`;
+
+}
+
+
+// =====================================================
+// TOAST
+// =====================================================
+
+function showToast(message) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    const messageElement =
+        document.getElementById(
+            "toastMessage"
+        );
+
+
+    if (!toast || !messageElement) {
+        return;
+    }
+
+
+    messageElement.textContent =
+        message;
+
+
+    toast.classList.add("show");
+
+
+    setTimeout(() => {
+
+        toast.classList.remove(
+            "show"
+        );
+
+    }, 2500);
+
+}
+
+
+// =====================================================
+// ESCAPE HTML
+// =====================================================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// =====================================================
+// CLOSE MODAL ON BACKDROP CLICK
+// =====================================================
 
 document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+    "click",
+    event => {
 
-
-        loadStudents();
-
-
-        const form =
+        const modal =
             document.getElementById(
-                "studentForm"
+                "editModal"
             );
 
 
-        if (form) {
+        if (
+            event.target === modal
+        ) {
 
-            form.addEventListener(
-                "submit",
-                addStudent
-            );
-
-        }
-
-
-        const search =
-            document.getElementById(
-                "searchStudent"
-            );
-
-
-        if (search) {
-
-            search.addEventListener(
-                "input",
-                filterStudents
-            );
-
-        }
-
-
-        const courseFilter =
-            document.getElementById(
-                "courseFilter"
-            );
-
-
-        if (courseFilter) {
-
-            courseFilter.addEventListener(
-                "change",
-                filterStudents
-            );
+            closeEditModal();
 
         }
 
