@@ -1,29 +1,211 @@
 // =====================================================
-// STUDENT MANAGEMENT SYSTEM
-// FINAL DASHBOARD JAVASCRIPT
+// SPIDER-MAN STUDENT MANAGEMENT SYSTEM
+// FINAL JAVASCRIPT
 // =====================================================
 
-const API_URL = "http://localhost:3000/api/students";
+
+// =====================================================
+// API
+// =====================================================
+
+const API_URL =
+    "http://localhost:3000/api/students";
+
 
 let students = [];
 
 
 // =====================================================
-// INITIALIZE
+// DOM READY
 // =====================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    setupNavigation();
-    setupStudentForm();
-    setupSearch();
+        initializeUser();
 
-    updateLiveDateTime();
-    setInterval(updateLiveDateTime, 1000);
+        setupIntro();
 
-    loadStudents();
+        setupNavigation();
 
-});
+        setupStudentForm();
+
+        setupSearch();
+
+        updateLiveDateTime();
+
+        setInterval(
+            updateLiveDateTime,
+            1000
+        );
+
+    }
+);
+
+
+// =====================================================
+// USER NAME
+// =====================================================
+
+function initializeUser() {
+
+    let savedName =
+        localStorage.getItem(
+            "studentDashboardUser"
+        );
+
+
+    if (!savedName) {
+
+        savedName =
+            prompt(
+                "🕷️ Spider-Man wants to know your name:"
+            );
+
+
+        if (
+            !savedName ||
+            !savedName.trim()
+        ) {
+
+            savedName = "User";
+
+        }
+        else {
+
+            savedName =
+                savedName.trim();
+
+        }
+
+
+        localStorage.setItem(
+            "studentDashboardUser",
+            savedName
+        );
+
+    }
+
+
+    updateUserName(savedName);
+
+}
+
+
+// =====================================================
+// UPDATE USER NAME
+// =====================================================
+
+function updateUserName(name) {
+
+    const introName =
+        document.getElementById(
+            "introName"
+        );
+
+
+    const dashboardName =
+        document.getElementById(
+            "dashboardName"
+        );
+
+
+    const avatar =
+        document.getElementById(
+            "userAvatar"
+        );
+
+
+    if (introName) {
+
+        introName.textContent =
+            name;
+
+    }
+
+
+    if (dashboardName) {
+
+        dashboardName.textContent =
+            name;
+
+    }
+
+
+    if (avatar) {
+
+        avatar.textContent =
+            name
+                .charAt(0)
+                .toUpperCase();
+
+    }
+
+}
+
+
+// =====================================================
+// INTRO
+// =====================================================
+
+function setupIntro() {
+
+    const intro =
+        document.getElementById(
+            "introScreen"
+        );
+
+
+    const app =
+        document.getElementById(
+            "app"
+        );
+
+
+    const button =
+        document.getElementById(
+            "enterDashboardBtn"
+        );
+
+
+    if (!intro || !app || !button) {
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            intro.classList.add(
+                "hide"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    intro.style.display =
+                        "none";
+
+                    app.classList.remove(
+                        "hidden"
+                    );
+
+
+                    loadStudents();
+
+                },
+                650
+            );
+
+        }
+    );
+
+}
 
 
 // =====================================================
@@ -32,31 +214,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function updateLiveDateTime() {
 
-    const now = new Date();
+    const now =
+        new Date();
 
-    const hour = now.getHours();
+
+    const hour =
+        now.getHours();
+
 
     let greeting;
 
+
     if (hour < 12) {
-        greeting = "Good Morning ☀️";
+
+        greeting =
+            "Good Morning ☀️";
+
     }
     else if (hour < 17) {
-        greeting = "Good Afternoon 🌤️";
+
+        greeting =
+            "Good Afternoon 🌤️";
+
     }
     else {
-        greeting = "Good Evening 🌙";
+
+        greeting =
+            "Good Evening 🌙";
+
     }
 
 
     const greetingElement =
-        document.getElementById("greeting");
+        document.getElementById(
+            "greeting"
+        );
+
 
     const dateElement =
-        document.getElementById("liveDate");
+        document.getElementById(
+            "liveDate"
+        );
+
 
     const timeElement =
-        document.getElementById("liveTime");
+        document.getElementById(
+            "liveTime"
+        );
 
 
     if (greetingElement) {
@@ -108,45 +312,71 @@ function updateLiveDateTime() {
 function setupNavigation() {
 
     const navItems =
-        document.querySelectorAll(".nav-item");
+        document.querySelectorAll(
+            ".nav-item"
+        );
 
-    navItems.forEach(button => {
 
-        button.addEventListener("click", () => {
+    navItems.forEach(
+        button => {
 
-            const section =
-                button.dataset.section;
+            button.addEventListener(
+                "click",
+                () => {
 
-            if (!section) {
-                return;
-            }
+                    const section =
+                        button.dataset.section;
 
-            showSection(section);
 
-        });
+                    if (!section) {
 
-    });
+                        return;
+
+                    }
+
+
+                    showSection(
+                        section
+                    );
+
+                }
+            );
+
+        }
+    );
 
 }
 
 
-function showSection(sectionName) {
+// =====================================================
+// SHOW SECTION
+// =====================================================
+
+function showSection(
+    sectionName
+) {
 
     const sections =
-        document.querySelectorAll(".page-section");
-
-    sections.forEach(section => {
-
-        section.classList.remove(
-            "active-section"
+        document.querySelectorAll(
+            ".page-section"
         );
 
-    });
+
+    sections.forEach(
+        section => {
+
+            section.classList.remove(
+                "active-section"
+            );
+
+        }
+    );
 
 
     const selectedSection =
         document.getElementById(
-            sectionName + "Section"
+            sectionName +
+            "Section"
         );
 
 
@@ -160,34 +390,53 @@ function showSection(sectionName) {
 
 
     const navItems =
-        document.querySelectorAll(".nav-item");
+        document.querySelectorAll(
+            ".nav-item"
+        );
 
-    navItems.forEach(item => {
 
-        item.classList.remove("active");
+    navItems.forEach(
+        item => {
 
-        if (
-            item.dataset.section ===
-            sectionName
-        ) {
+            item.classList.remove(
+                "active"
+            );
 
-            item.classList.add("active");
+
+            if (
+                item.dataset.section ===
+                sectionName
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+
+            }
 
         }
-
-    });
+    );
 
 
     const title =
-        document.getElementById("pageTitle");
+        document.getElementById(
+            "pageTitle"
+        );
 
 
     const titles = {
 
-        dashboard: "Dashboard",
-        students: "Students",
-        analytics: "Analytics",
-        settings: "Settings"
+        dashboard:
+            "Dashboard",
+
+        students:
+            "Students",
+
+        analytics:
+            "Analytics",
+
+        settings:
+            "Settings"
 
     };
 
@@ -201,7 +450,10 @@ function showSection(sectionName) {
     }
 
 
-    if (sectionName === "analytics") {
+    if (
+        sectionName ===
+        "analytics"
+    ) {
 
         updateAnalytics();
 
@@ -219,7 +471,9 @@ async function loadStudents() {
     try {
 
         const response =
-            await fetch(API_URL);
+            await fetch(
+                API_URL
+            );
 
 
         if (!response.ok) {
@@ -235,11 +489,20 @@ async function loadStudents() {
             await response.json();
 
 
-        renderStudents(students);
-        renderOverview(students);
-        updateStatistics();
-        updateCourseFilter();
+        renderStudents(
+            students
+        );
 
+
+        renderOverview(
+            students
+        );
+
+
+        updateStatistics();
+
+
+        updateCourseFilter();
 
     }
     catch (error) {
@@ -248,6 +511,7 @@ async function loadStudents() {
             "Load students error:",
             error
         );
+
 
         showToast(
             "Unable to load students"
@@ -259,10 +523,12 @@ async function loadStudents() {
 
 
 // =====================================================
-// RENDER STUDENT TABLE
+// RENDER STUDENTS
 // =====================================================
 
-function renderStudents(data) {
+function renderStudents(
+    data
+) {
 
     const tableBody =
         document.getElementById(
@@ -271,11 +537,14 @@ function renderStudents(data) {
 
 
     if (!tableBody) {
+
         return;
+
     }
 
 
-    tableBody.innerHTML = "";
+    tableBody.innerHTML =
+        "";
 
 
     if (data.length === 0) {
@@ -284,8 +553,14 @@ function renderStudents(data) {
 
             <tr>
 
-                <td colspan="5"
-                    style="text-align:center;padding:30px;color:#68728b">
+                <td
+                    colspan="5"
+                    style="
+                        text-align:center;
+                        padding:30px;
+                        color:#68728b;
+                    "
+                >
 
                     No students found
 
@@ -295,67 +570,87 @@ function renderStudents(data) {
 
         `;
 
-        updateRecordCount(0);
+
+        updateRecordCount(
+            0
+        );
+
 
         return;
 
     }
 
 
-    data.forEach(student => {
+    data.forEach(
+        student => {
 
-        const row =
-            document.createElement("tr");
-
-
-        row.innerHTML = `
-
-            <td>${escapeHTML(student.id)}</td>
-
-            <td>${escapeHTML(student.name)}</td>
-
-            <td>${escapeHTML(student.email)}</td>
-
-            <td>${escapeHTML(student.course)}</td>
-
-            <td>
-
-                <button
-                    class="edit-btn"
-                    onclick="editStudent(${student.id})">
-
-                    Edit
-
-                </button>
-
-                <button
-                    class="delete-btn"
-                    onclick="deleteStudent(${student.id})">
-
-                    Delete
-
-                </button>
-
-            </td>
-
-        `;
+            const row =
+                document.createElement(
+                    "tr"
+                );
 
 
-        tableBody.appendChild(row);
+            row.innerHTML = `
 
-    });
+                <td>
+                    ${escapeHTML(student.id)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.name)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.email)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.course)}
+                </td>
+
+                <td>
+
+                    <button
+                        class="edit-btn"
+                        onclick="editStudent(${student.id})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        class="delete-btn"
+                        onclick="deleteStudent(${student.id})"
+                    >
+                        Delete
+                    </button>
+
+                </td>
+
+            `;
 
 
-    updateRecordCount(data.length);
+            tableBody.appendChild(
+                row
+            );
+
+        }
+    );
+
+
+    updateRecordCount(
+        data.length
+    );
 
 }
 
 
 // =====================================================
-// OVERVIEW TABLE
+// OVERVIEW
 // =====================================================
 
-function renderOverview(data) {
+function renderOverview(
+    data
+) {
 
     const tableBody =
         document.getElementById(
@@ -364,25 +659,38 @@ function renderOverview(data) {
 
 
     if (!tableBody) {
+
         return;
+
     }
 
 
-    tableBody.innerHTML = "";
+    tableBody.innerHTML =
+        "";
 
 
     const recent =
-        data.slice(-5).reverse();
+        data
+            .slice(-5)
+            .reverse();
 
 
-    if (recent.length === 0) {
+    if (
+        recent.length ===
+        0
+    ) {
 
         tableBody.innerHTML = `
 
             <tr>
 
-                <td colspan="4"
-                    style="text-align:center;padding:30px">
+                <td
+                    colspan="4"
+                    style="
+                        text-align:center;
+                        padding:30px;
+                    "
+                >
 
                     No students yet
 
@@ -392,33 +700,48 @@ function renderOverview(data) {
 
         `;
 
+
         return;
 
     }
 
 
-    recent.forEach(student => {
+    recent.forEach(
+        student => {
 
-        const row =
-            document.createElement("tr");
-
-
-        row.innerHTML = `
-
-            <td>${escapeHTML(student.id)}</td>
-
-            <td>${escapeHTML(student.name)}</td>
-
-            <td>${escapeHTML(student.email)}</td>
-
-            <td>${escapeHTML(student.course)}</td>
-
-        `;
+            const row =
+                document.createElement(
+                    "tr"
+                );
 
 
-        tableBody.appendChild(row);
+            row.innerHTML = `
 
-    });
+                <td>
+                    ${escapeHTML(student.id)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.name)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.email)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.course)}
+                </td>
+
+            `;
+
+
+            tableBody.appendChild(
+                row
+            );
+
+        }
+    );
 
 }
 
@@ -436,7 +759,9 @@ function setupStudentForm() {
 
 
     if (!form) {
+
         return;
+
     }
 
 
@@ -448,7 +773,9 @@ function setupStudentForm() {
 }
 
 
-async function addStudent(event) {
+async function addStudent(
+    event
+) {
 
     event.preventDefault();
 
@@ -471,11 +798,16 @@ async function addStudent(event) {
         ).value.trim();
 
 
-    if (!name || !email || !course) {
+    if (
+        !name ||
+        !email ||
+        !course
+    ) {
 
         showToast(
             "Please fill all fields"
         );
+
 
         return;
 
@@ -492,15 +824,20 @@ async function addStudent(event) {
                     method: "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
-                    body: JSON.stringify({
-                        name,
-                        email,
-                        course
-                    })
+                    body:
+                        JSON.stringify(
+                            {
+                                name,
+                                email,
+                                course
+                            }
+                        )
 
                 }
             );
@@ -520,9 +857,11 @@ async function addStudent(event) {
         }
 
 
-        document.getElementById(
-            "studentForm"
-        ).reset();
+        document
+            .getElementById(
+                "studentForm"
+            )
+            .reset();
 
 
         showToast(
@@ -533,12 +872,17 @@ async function addStudent(event) {
         await loadStudents();
 
 
-        showSection("students");
+        showSection(
+            "students"
+        );
 
     }
     catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         showToast(
             "Error adding student"
@@ -553,11 +897,15 @@ async function addStudent(event) {
 // EDIT STUDENT
 // =====================================================
 
-async function editStudent(id) {
+async function editStudent(
+    id
+) {
 
     const student =
         students.find(
-            s => Number(s.id) === Number(id)
+            s =>
+                Number(s.id) ===
+                Number(id)
         );
 
 
@@ -567,6 +915,7 @@ async function editStudent(id) {
             "Student not found"
         );
 
+
         return;
 
     }
@@ -574,40 +923,48 @@ async function editStudent(id) {
 
     document.getElementById(
         "editId"
-    ).value = student.id;
+    ).value =
+        student.id;
 
 
     document.getElementById(
         "editName"
-    ).value = student.name;
+    ).value =
+        student.name;
 
 
     document.getElementById(
         "editEmail"
-    ).value = student.email;
+    ).value =
+        student.email;
 
 
     document.getElementById(
         "editCourse"
-    ).value = student.course;
+    ).value =
+        student.course;
 
 
     document.getElementById(
         "editModal"
-    ).classList.add("show");
+    ).classList.add(
+        "show"
+    );
 
 }
 
 
 // =====================================================
-// CLOSE EDIT MODAL
+// CLOSE MODAL
 // =====================================================
 
 function closeEditModal() {
 
     document.getElementById(
         "editModal"
-    ).classList.remove("show");
+    ).classList.remove(
+        "show"
+    );
 
 }
 
@@ -642,11 +999,16 @@ async function saveEdit() {
         ).value.trim();
 
 
-    if (!name || !email || !course) {
+    if (
+        !name ||
+        !email ||
+        !course
+    ) {
 
         showToast(
             "Please fill all fields"
         );
+
 
         return;
 
@@ -663,15 +1025,20 @@ async function saveEdit() {
                     method: "PUT",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
-                    body: JSON.stringify({
-                        name,
-                        email,
-                        course
-                    })
+                    body:
+                        JSON.stringify(
+                            {
+                                name,
+                                email,
+                                course
+                            }
+                        )
 
                 }
             );
@@ -710,6 +1077,7 @@ async function saveEdit() {
             error
         );
 
+
         showToast(
             "Error updating student"
         );
@@ -720,19 +1088,25 @@ async function saveEdit() {
 
 
 // =====================================================
-// DELETE STUDENT
+// DELETE
 // =====================================================
 
-async function deleteStudent(id) {
+async function deleteStudent(
+    id
+) {
 
     const student =
         students.find(
-            s => Number(s.id) === Number(id)
+            s =>
+                Number(s.id) ===
+                Number(id)
         );
 
 
     if (!student) {
+
         return;
+
     }
 
 
@@ -743,7 +1117,9 @@ async function deleteStudent(id) {
 
 
     if (!confirmed) {
+
         return;
+
     }
 
 
@@ -753,7 +1129,8 @@ async function deleteStudent(id) {
             await fetch(
                 `${API_URL}/${id}`,
                 {
-                    method: "DELETE"
+                    method:
+                        "DELETE"
                 }
             );
 
@@ -787,6 +1164,7 @@ async function deleteStudent(id) {
             error
         );
 
+
         showToast(
             "Error deleting student"
         );
@@ -797,7 +1175,7 @@ async function deleteStudent(id) {
 
 
 // =====================================================
-// SEARCH + FILTER
+// SEARCH
 // =====================================================
 
 function setupSearch() {
@@ -853,48 +1231,78 @@ function applyFilters() {
 
 
     const filtered =
-        students.filter(student => {
+        students.filter(
+            student => {
 
-            const matchesSearch =
-
-                student.name
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                student.email
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                student.course
-                    .toLowerCase()
-                    .includes(search);
+                const name =
+                    String(
+                        student.name
+                    )
+                    .toLowerCase();
 
 
-            const matchesCourse =
-
-                course === "all" ||
-                student.course === course;
-
-
-            return (
-                matchesSearch &&
-                matchesCourse
-            );
-
-        });
+                const email =
+                    String(
+                        student.email
+                    )
+                    .toLowerCase();
 
 
-    renderStudents(filtered);
+                const studentCourse =
+                    String(
+                        student.course
+                    )
+                    .toLowerCase();
+
+
+                const matchesSearch =
+
+                    name.includes(
+                        search
+                    )
+
+                    ||
+
+                    email.includes(
+                        search
+                    )
+
+                    ||
+
+                    studentCourse.includes(
+                        search
+                    );
+
+
+                const matchesCourse =
+
+                    course ===
+                        "all"
+
+                    ||
+
+                    student.course ===
+                        course;
+
+
+                return (
+                    matchesSearch &&
+                    matchesCourse
+                );
+
+            }
+        );
+
+
+    renderStudents(
+        filtered
+    );
 
 }
 
 
 // =====================================================
-// COURSE FILTER OPTIONS
+// COURSE FILTER
 // =====================================================
 
 function updateCourseFilter() {
@@ -906,7 +1314,9 @@ function updateCourseFilter() {
 
 
     if (!filter) {
+
         return;
+
     }
 
 
@@ -915,11 +1325,14 @@ function updateCourseFilter() {
 
 
     const courses =
-        [...new Set(
-            students.map(
-                student => student.course
+        [
+            ...new Set(
+                students.map(
+                    student =>
+                        student.course
+                )
             )
-        )]
+        ]
         .sort();
 
 
@@ -932,29 +1345,39 @@ function updateCourseFilter() {
     `;
 
 
-    courses.forEach(course => {
+    courses.forEach(
+        course => {
 
-        const option =
-            document.createElement(
-                "option"
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                course;
+
+
+            option.textContent =
+                course;
+
+
+            filter.appendChild(
+                option
             );
 
-
-        option.value = course;
-
-        option.textContent = course;
-
-
-        filter.appendChild(option);
-
-    });
+        }
+    );
 
 
     if (
-        courses.includes(current)
+        courses.includes(
+            current
+        )
     ) {
 
-        filter.value = current;
+        filter.value =
+            current;
 
     }
 
@@ -974,7 +1397,8 @@ function updateStatistics() {
     const courses =
         new Set(
             students.map(
-                student => student.course
+                student =>
+                    student.course
             )
         ).size;
 
@@ -1064,19 +1488,26 @@ function updateAnalytics() {
 
 
     if (!overview) {
+
         return;
+
     }
 
 
-    if (students.length === 0) {
+    if (
+        students.length ===
+        0
+    ) {
 
         overview.innerHTML = `
 
-            <div style="
-                padding:35px;
-                text-align:center;
-                color:#68728b;
-            ">
+            <div
+                style="
+                    padding:35px;
+                    text-align:center;
+                    color:#68728b;
+                "
+            >
 
                 No student data available yet.
 
@@ -1084,83 +1515,114 @@ function updateAnalytics() {
 
         `;
 
+
         return;
 
     }
 
 
-    const courseCounts = {};
+    const courseCounts =
+        {};
 
 
-    students.forEach(student => {
+    students.forEach(
+        student => {
 
-        const course =
-            student.course || "Unknown";
+            const course =
+                student.course ||
+                "Unknown";
 
 
-        courseCounts[course] =
-            (courseCounts[course] || 0) + 1;
+            courseCounts[course] =
+                (
+                    courseCounts[course] ||
+                    0
+                ) + 1;
 
-    });
+        }
+    );
 
 
     const total =
         students.length;
 
 
-    overview.innerHTML = "";
+    overview.innerHTML =
+        "";
 
 
-    Object.entries(courseCounts)
-        .sort((a,b) => b[1] - a[1])
-        .forEach(([course, count]) => {
+    Object.entries(
+        courseCounts
+    )
+        .sort(
+            (a, b) =>
+                b[1] - a[1]
+        )
+        .forEach(
+            ([course, count]) => {
 
-            const percentage =
-                Math.round(
-                    (count / total) * 100
-                );
+                const percentage =
+                    Math.round(
+                        (
+                            count /
+                            total
+                        ) * 100
+                    );
 
 
-            const row =
-                document.createElement(
-                    "div"
-                );
+                const row =
+                    document.createElement(
+                        "div"
+                    );
 
 
-            row.className =
-                "course-row";
+                row.className =
+                    "course-row";
 
 
-            row.innerHTML = `
-
-                <div class="course-info">
-
-                    <span>
-                        ${escapeHTML(course)}
-                    </span>
-
-                    <span>
-                        ${count} student${count !== 1 ? "s" : ""}
-                        · ${percentage}%
-                    </span>
-
-                </div>
-
-                <div class="progress">
+                row.innerHTML = `
 
                     <div
-                        class="progress-bar"
-                        style="width:${percentage}%">
+                        class="course-info"
+                    >
+
+                        <span>
+                            ${escapeHTML(course)}
+                        </span>
+
+                        <span>
+                            ${count}
+                            student${count !== 1 ? "s" : ""}
+                            ·
+                            ${percentage}%
+                        </span>
+
                     </div>
 
-                </div>
 
-            `;
+                    <div
+                        class="progress"
+                    >
+
+                        <div
+                            class="progress-bar"
+                            style="
+                                width:${percentage}%;
+                            "
+                        >
+                        </div>
+
+                    </div>
+
+                `;
 
 
-            overview.appendChild(row);
+                overview.appendChild(
+                    row
+                );
 
-        });
+            }
+        );
 
 }
 
@@ -1169,7 +1631,9 @@ function updateAnalytics() {
 // RECORD COUNT
 // =====================================================
 
-function updateRecordCount(count) {
+function updateRecordCount(
+    count
+) {
 
     const element =
         document.getElementById(
@@ -1178,7 +1642,9 @@ function updateRecordCount(count) {
 
 
     if (!element) {
+
         return;
+
     }
 
 
@@ -1192,7 +1658,9 @@ function updateRecordCount(count) {
 // TOAST
 // =====================================================
 
-function showToast(message) {
+function showToast(
+    message
+) {
 
     const toast =
         document.getElementById(
@@ -1206,8 +1674,13 @@ function showToast(message) {
         );
 
 
-    if (!toast || !messageElement) {
+    if (
+        !toast ||
+        !messageElement
+    ) {
+
         return;
+
     }
 
 
@@ -1215,16 +1688,21 @@ function showToast(message) {
         message;
 
 
-    toast.classList.add("show");
+    toast.classList.add(
+        "show"
+    );
 
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        toast.classList.remove(
-            "show"
-        );
+            toast.classList.remove(
+                "show"
+            );
 
-    }, 2500);
+        },
+        2500
+    );
 
 }
 
@@ -1233,20 +1711,37 @@ function showToast(message) {
 // ESCAPE HTML
 // =====================================================
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
 
 // =====================================================
-// CLOSE MODAL ON BACKDROP CLICK
+// CLOSE MODAL ON BACKDROP
 // =====================================================
 
 document.addEventListener(
@@ -1260,7 +1755,8 @@ document.addEventListener(
 
 
         if (
-            event.target === modal
+            event.target ===
+            modal
         ) {
 
             closeEditModal();
