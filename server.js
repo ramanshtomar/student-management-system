@@ -22,85 +22,85 @@ app.use(express.json());
 
 
 /* =====================================================
-   MYSQL DATABASE CONNECTION
-   Railway MySQL uses MYSQL_URL
+   DATABASE CONFIGURATION
 ===================================================== */
 
-let db;
+const DB_HOST = process.env.DB_HOST;
+const DB_PORT = Number(process.env.DB_PORT || 3306);
+const DB_USER = process.env.DB_USER;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_NAME = process.env.DB_NAME;
 
-try {
-    if (process.env.MYSQL_URL) {
 
-        console.log("Using Railway MYSQL_URL...");
+/* =====================================================
+   DATABASE CONFIG DEBUG
+   Does NOT print password
+===================================================== */
 
-        db = mysql.createPool({
-            uri: process.env.MYSQL_URL,
+console.log("Database configuration:");
 
-            waitForConnections: true,
-            connectionLimit: 10,
-            queueLimit: 0
-        });
+console.log("DB_HOST:", DB_HOST ? "SET" : "MISSING");
+console.log("DB_PORT:", DB_PORT);
+console.log("DB_USER:", DB_USER ? "SET" : "MISSING");
+console.log(
+    "DB_PASSWORD:",
+    DB_PASSWORD ? "SET" : "MISSING"
+);
+console.log("DB_NAME:", DB_NAME ? "SET" : "MISSING");
 
-    } else {
 
-        console.log("MYSQL_URL not found. Using individual DB variables...");
+/* =====================================================
+   MYSQL CONNECTION POOL
+===================================================== */
 
-        db = mysql.createPool({
-            host: process.env.MYSQLHOST || process.env.DB_HOST,
-            port: Number(
-                process.env.MYSQLPORT ||
-                process.env.DB_PORT ||
-                3306
-            ),
-            user: process.env.MYSQLUSER || process.env.DB_USER,
-            password:
-                process.env.MYSQLPASSWORD ||
-                process.env.DB_PASSWORD,
-            database:
-                process.env.MYSQLDATABASE ||
-                process.env.DB_NAME,
+const db = mysql.createPool({
 
-            waitForConnections: true,
-            connectionLimit: 10,
-            queueLimit: 0
-        });
-    }
+    host: DB_HOST,
 
-} catch (error) {
+    port: DB_PORT,
 
-    console.error(
-        "MySQL pool creation failed:",
-        error.message
-    );
-}
+    user: DB_USER,
+
+    password: DB_PASSWORD,
+
+    database: DB_NAME,
+
+    waitForConnections: true,
+
+    connectionLimit: 10,
+
+    queueLimit: 0,
+
+    connectTimeout: 10000
+
+});
 
 
 /* =====================================================
    MYSQL CONNECTION TEST
 ===================================================== */
 
-if (db) {
+db.getConnection((err, connection) => {
 
-    db.getConnection((err, connection) => {
+    if (err) {
 
-        if (err) {
-
-            console.error(
-                "MySQL connection failed:",
-                err
-            );
-
-            return;
-        }
-
-        console.log(
-            "MySQL connected successfully!"
+        console.error(
+            "MySQL connection failed:"
         );
 
-        connection.release();
-    });
+        console.error(err);
 
-}
+        return;
+
+    }
+
+    console.log(
+        "MySQL connected successfully!"
+    );
+
+    connection.release();
+
+});
 
 
 /* =====================================================
@@ -110,8 +110,13 @@ if (db) {
 app.get("/", (req, res) => {
 
     res.json({
-        message: "Student Management API is running",
-        status: "online"
+
+        message:
+            "Student Management API is running",
+
+        status:
+            "online"
+
     });
 
 });
@@ -124,8 +129,13 @@ app.get("/", (req, res) => {
 app.get("/api/test", (req, res) => {
 
     res.json({
-        message: "Backend is working",
-        status: "success"
+
+        message:
+            "Backend is working",
+
+        status:
+            "success"
+
     });
 
 });
@@ -137,36 +147,43 @@ app.get("/api/test", (req, res) => {
 
 app.get("/api/db-test", (req, res) => {
 
-    if (!db) {
+    db.query(
+        "SELECT 1 AS test",
+        (err, results) => {
 
-        return res.status(500).json({
-            message: "Database pool is not initialized"
-        });
+            if (err) {
 
-    }
+                console.error(
+                    "DATABASE TEST ERROR:"
+                );
 
-    db.query("SELECT 1 AS test", (err, results) => {
+                console.error(err);
 
-        if (err) {
+                return res.status(500).json({
 
-            console.error(
-                "DATABASE TEST ERROR:",
-                err
-            );
+                    message:
+                        "Database connection failed",
 
-            return res.status(500).json({
-                message: "Database connection failed",
-                error: err.message
+                    error:
+                        err.message
+
+                });
+
+            }
+
+
+            res.json({
+
+                message:
+                    "Database connected successfully",
+
+                result:
+                    results
+
             });
 
         }
-
-        res.json({
-            message: "Database connected successfully",
-            result: results
-        });
-
-    });
+    );
 
 });
 
@@ -183,25 +200,36 @@ app.get("/api/students", (req, res) => {
         ORDER BY id DESC
     `;
 
-    db.query(sql, (err, results) => {
 
-        if (err) {
+    db.query(
+        sql,
+        (err, results) => {
 
-            console.error(
-                "GET STUDENTS ERROR:",
-                err
-            );
+            if (err) {
 
-            return res.status(500).json({
-                message: "Database error",
-                error: err.message
-            });
+                console.error(
+                    "GET STUDENTS ERROR:"
+                );
+
+                console.error(err);
+
+                return res.status(500).json({
+
+                    message:
+                        "Database error",
+
+                    error:
+                        err.message
+
+                });
+
+            }
+
+
+            res.json(results);
 
         }
-
-        res.json(results);
-
-    });
+    );
 
 });
 
@@ -210,360 +238,435 @@ app.get("/api/students", (req, res) => {
    GET STUDENT BY ID
 ===================================================== */
 
-app.get("/api/students/:id", (req, res) => {
+app.get(
+    "/api/students/:id",
+    (req, res) => {
 
-    const id = req.params.id;
+        const id = req.params.id;
 
-    const sql = `
-        SELECT *
-        FROM students
-        WHERE id = ?
-    `;
 
-    db.query(
-        sql,
-        [id],
-        (err, results) => {
+        const sql = `
+            SELECT *
+            FROM students
+            WHERE id = ?
+        `;
 
-            if (err) {
 
-                console.error(
-                    "GET STUDENT ERROR:",
-                    err
+        db.query(
+            sql,
+            [id],
+            (err, results) => {
+
+                if (err) {
+
+                    console.error(
+                        "GET STUDENT ERROR:"
+                    );
+
+                    console.error(err);
+
+                    return res.status(500).json({
+
+                        message:
+                            "Database error",
+
+                        error:
+                            err.message
+
+                    });
+
+                }
+
+
+                if (
+                    results.length === 0
+                ) {
+
+                    return res.status(404).json({
+
+                        message:
+                            "Student not found"
+
+                    });
+
+                }
+
+
+                res.json(
+                    results[0]
                 );
 
-                return res.status(500).json({
-                    message: "Database error",
-                    error: err.message
-                });
-
             }
+        );
 
-            if (results.length === 0) {
-
-                return res.status(404).json({
-                    message: "Student not found"
-                });
-
-            }
-
-            res.json(results[0]);
-
-        }
-    );
-
-});
+    }
+);
 
 
 /* =====================================================
    ADD NEW STUDENT
 ===================================================== */
 
-app.post("/api/students", (req, res) => {
+app.post(
+    "/api/students",
+    (req, res) => {
 
-    const {
-        name,
-        email,
-        course
-    } = req.body;
-
-
-    /* ---------- Validation ---------- */
-
-    if (
-        !name ||
-        !email ||
-        !course
-    ) {
-
-        return res.status(400).json({
-            message:
-                "Name, email and course are required"
-        });
-
-    }
-
-
-    /* ---------- SQL ---------- */
-
-    const sql = `
-        INSERT INTO students
-        (name, email, course)
-        VALUES (?, ?, ?)
-    `;
-
-
-    db.query(
-        sql,
-        [
+        const {
             name,
             email,
             course
-        ],
-        (err, result) => {
-
-            if (err) {
-
-                console.error(
-                    "ADD STUDENT ERROR:",
-                    err
-                );
-
-                return res.status(500).json({
-                    message: "Database error",
-                    error: err.message
-                });
-
-            }
+        } = req.body;
 
 
-            res.status(201).json({
+        /* ---------- VALIDATION ---------- */
+
+        if (
+            !name ||
+            !email ||
+            !course
+        ) {
+
+            return res.status(400).json({
 
                 message:
-                    "Student added successfully",
-
-                student: {
-
-                    id: result.insertId,
-
-                    name: name,
-
-                    email: email,
-
-                    course: course
-
-                }
+                    "Name, email and course are required"
 
             });
 
         }
-    );
 
-});
+
+        /* ---------- INSERT ---------- */
+
+        const sql = `
+            INSERT INTO students
+            (name, email, course)
+            VALUES (?, ?, ?)
+        `;
+
+
+        db.query(
+            sql,
+            [
+                name,
+                email,
+                course
+            ],
+            (err, result) => {
+
+                if (err) {
+
+                    console.error(
+                        "ADD STUDENT ERROR:"
+                    );
+
+                    console.error(err);
+
+                    return res.status(500).json({
+
+                        message:
+                            "Database error",
+
+                        error:
+                            err.message
+
+                    });
+
+                }
+
+
+                res.status(201).json({
+
+                    message:
+                        "Student added successfully",
+
+                    student: {
+
+                        id:
+                            result.insertId,
+
+                        name:
+                            name,
+
+                        email:
+                            email,
+
+                        course:
+                            course
+
+                    }
+
+                });
+
+            }
+        );
+
+    }
+);
 
 
 /* =====================================================
    UPDATE STUDENT
 ===================================================== */
 
-app.put("/api/students/:id", (req, res) => {
+app.put(
+    "/api/students/:id",
+    (req, res) => {
 
-    const id = req.params.id;
-
-    const {
-        name,
-        email,
-        course
-    } = req.body;
+        const id =
+            req.params.id;
 
 
-    /* ---------- Validation ---------- */
-
-    if (
-        !name ||
-        !email ||
-        !course
-    ) {
-
-        return res.status(400).json({
-            message:
-                "Name, email and course are required"
-        });
-
-    }
-
-
-    /* ---------- SQL ---------- */
-
-    const sql = `
-        UPDATE students
-        SET
-            name = ?,
-            email = ?,
-            course = ?
-        WHERE id = ?
-    `;
-
-
-    db.query(
-        sql,
-        [
+        const {
             name,
             email,
-            course,
-            id
-        ],
-        (err, result) => {
-
-            if (err) {
-
-                console.error(
-                    "UPDATE STUDENT ERROR:",
-                    err
-                );
-
-                return res.status(500).json({
-                    message: "Database error",
-                    error: err.message
-                });
-
-            }
+            course
+        } = req.body;
 
 
-            if (
-                result.affectedRows === 0
-            ) {
+        /* ---------- VALIDATION ---------- */
 
-                return res.status(404).json({
-                    message:
-                        "Student not found"
-                });
+        if (
+            !name ||
+            !email ||
+            !course
+        ) {
 
-            }
-
-
-            res.json({
+            return res.status(400).json({
 
                 message:
-                    "Student updated successfully",
-
-                student: {
-
-                    id: Number(id),
-
-                    name: name,
-
-                    email: email,
-
-                    course: course
-
-                }
+                    "Name, email and course are required"
 
             });
 
         }
-    );
 
-});
+
+        /* ---------- UPDATE ---------- */
+
+        const sql = `
+            UPDATE students
+            SET
+                name = ?,
+                email = ?,
+                course = ?
+            WHERE id = ?
+        `;
+
+
+        db.query(
+            sql,
+            [
+                name,
+                email,
+                course,
+                id
+            ],
+            (err, result) => {
+
+                if (err) {
+
+                    console.error(
+                        "UPDATE STUDENT ERROR:"
+                    );
+
+                    console.error(err);
+
+                    return res.status(500).json({
+
+                        message:
+                            "Database error",
+
+                        error:
+                            err.message
+
+                    });
+
+                }
+
+
+                if (
+                    result.affectedRows === 0
+                ) {
+
+                    return res.status(404).json({
+
+                        message:
+                            "Student not found"
+
+                    });
+
+                }
+
+
+                res.json({
+
+                    message:
+                        "Student updated successfully",
+
+                    student: {
+
+                        id:
+                            Number(id),
+
+                        name:
+                            name,
+
+                        email:
+                            email,
+
+                        course:
+                            course
+
+                    }
+
+                });
+
+            }
+        );
+
+    }
+);
 
 
 /* =====================================================
    DELETE STUDENT
 ===================================================== */
 
-app.delete("/api/students/:id", (req, res) => {
+app.delete(
+    "/api/students/:id",
+    (req, res) => {
 
-    const id = req.params.id;
-
-
-    /* ---------- First find student ---------- */
-
-    const selectSql = `
-        SELECT *
-        FROM students
-        WHERE id = ?
-    `;
+        const id =
+            req.params.id;
 
 
-    db.query(
-        selectSql,
-        [id],
-        (err, results) => {
+        /* ---------- FIND STUDENT FIRST ---------- */
 
-            if (err) {
-
-                console.error(
-                    "GET BEFORE DELETE ERROR:",
-                    err
-                );
-
-                return res.status(500).json({
-                    message: "Database error",
-                    error: err.message
-                });
-
-            }
+        const selectSql = `
+            SELECT *
+            FROM students
+            WHERE id = ?
+        `;
 
 
-            if (
-                results.length === 0
-            ) {
+        db.query(
+            selectSql,
+            [id],
+            (err, results) => {
 
-                return res.status(404).json({
-                    message:
-                        "Student not found"
-                });
+                if (err) {
 
-            }
+                    console.error(
+                        "GET BEFORE DELETE ERROR:"
+                    );
 
+                    console.error(err);
 
-            const student = results[0];
-
-
-            /* ---------- Delete student ---------- */
-
-            const deleteSql = `
-                DELETE FROM students
-                WHERE id = ?
-            `;
-
-
-            db.query(
-                deleteSql,
-                [id],
-                (err, result) => {
-
-                    if (err) {
-
-                        console.error(
-                            "DELETE STUDENT ERROR:",
-                            err
-                        );
-
-                        return res.status(500).json({
-                            message:
-                                "Database error",
-                            error:
-                                err.message
-                        });
-
-                    }
-
-
-                    res.json({
+                    return res.status(500).json({
 
                         message:
-                            "Student deleted successfully",
+                            "Database error",
 
-                        student:
-                            student
+                        error:
+                            err.message
 
                     });
 
                 }
-            );
 
-        }
-    );
 
-});
+                if (
+                    results.length === 0
+                ) {
+
+                    return res.status(404).json({
+
+                        message:
+                            "Student not found"
+
+                    });
+
+                }
+
+
+                const student =
+                    results[0];
+
+
+                /* ---------- DELETE ---------- */
+
+                const deleteSql = `
+                    DELETE FROM students
+                    WHERE id = ?
+                `;
+
+
+                db.query(
+                    deleteSql,
+                    [id],
+                    (err, result) => {
+
+                        if (err) {
+
+                            console.error(
+                                "DELETE STUDENT ERROR:"
+                            );
+
+                            console.error(err);
+
+                            return res.status(500).json({
+
+                                message:
+                                    "Database error",
+
+                                error:
+                                    err.message
+
+                            });
+
+                        }
+
+
+                        res.json({
+
+                            message:
+                                "Student deleted successfully",
+
+                            student:
+                                student
+
+                        });
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
 
 
 /* =====================================================
    404 ROUTE
 ===================================================== */
 
-app.use((req, res) => {
+app.use(
+    (req, res) => {
 
-    res.status(404).json({
+        res.status(404).json({
 
-        message: "Route not found",
+            message:
+                "Route not found",
 
-        path: req.originalUrl
+            path:
+                req.originalUrl
 
-    });
+        });
 
-});
+    }
+);
 
 
 /* =====================================================
@@ -574,9 +677,10 @@ app.use(
     (err, req, res, next) => {
 
         console.error(
-            "SERVER ERROR:",
-            err
+            "SERVER ERROR:"
         );
+
+        console.error(err);
 
         res.status(500).json({
 
@@ -606,4 +710,4 @@ app.listen(
         );
 
     }
-)
+);
