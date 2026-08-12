@@ -22,62 +22,63 @@ app.use(express.json());
 
 
 /* =====================================================
-   DATABASE CONFIGURATION
+   DATABASE CONNECTION
+   Railway  -> MYSQL_URL
+   Local    -> DB_HOST / DB_USER / DB_PASSWORD / DB_NAME
 ===================================================== */
 
-const DB_HOST = process.env.DB_HOST;
-const DB_PORT = Number(process.env.DB_PORT || 3306);
-const DB_USER = process.env.DB_USER;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_NAME = process.env.DB_NAME;
+let dbConfig;
 
 
-/* =====================================================
-   DATABASE CONFIG DEBUG
-   Does NOT print password
-===================================================== */
+/* ---------- RAILWAY MYSQL URL ---------- */
 
-console.log("Database configuration:");
+if (process.env.MYSQL_URL) {
 
-console.log("DB_HOST:", DB_HOST ? "SET" : "MISSING");
-console.log("DB_PORT:", DB_PORT);
-console.log("DB_USER:", DB_USER ? "SET" : "MISSING");
-console.log(
-    "DB_PASSWORD:",
-    DB_PASSWORD ? "SET" : "MISSING"
-);
-console.log("DB_NAME:", DB_NAME ? "SET" : "MISSING");
+    console.log("Using MYSQL_URL for database connection.");
+
+    dbConfig = process.env.MYSQL_URL;
+
+}
+
+
+/* ---------- LOCAL DATABASE VARIABLES ---------- */
+
+else {
+
+    console.log(
+        "MYSQL_URL not found. Using local DB variables."
+    );
+
+    dbConfig = {
+
+        host: process.env.DB_HOST,
+
+        port: Number(
+            process.env.DB_PORT || 3306
+        ),
+
+        user: process.env.DB_USER,
+
+        password: process.env.DB_PASSWORD,
+
+        database: process.env.DB_NAME,
+
+        connectTimeout: 10000
+
+    };
+
+}
 
 
 /* =====================================================
    MYSQL CONNECTION POOL
 ===================================================== */
 
-const db = mysql.createPool({
-
-    host: DB_HOST,
-
-    port: DB_PORT,
-
-    user: DB_USER,
-
-    password: DB_PASSWORD,
-
-    database: DB_NAME,
-
-    waitForConnections: true,
-
-    connectionLimit: 10,
-
-    queueLimit: 0,
-
-    connectTimeout: 10000
-
-});
+const db = mysql.createPool(dbConfig);
 
 
 /* =====================================================
-   MYSQL CONNECTION TEST
+   DATABASE CONNECTION TEST
 ===================================================== */
 
 db.getConnection((err, connection) => {
@@ -88,15 +89,19 @@ db.getConnection((err, connection) => {
             "MySQL connection failed:"
         );
 
-        console.error(err);
+        console.error(
+            err.message
+        );
 
         return;
 
     }
 
+
     console.log(
         "MySQL connected successfully!"
     );
+
 
     connection.release();
 
@@ -123,7 +128,7 @@ app.get("/", (req, res) => {
 
 
 /* =====================================================
-   API TEST ROUTE
+   API TEST
 ===================================================== */
 
 app.get("/api/test", (req, res) => {
@@ -142,7 +147,7 @@ app.get("/api/test", (req, res) => {
 
 
 /* =====================================================
-   DATABASE TEST ROUTE
+   DATABASE TEST
 ===================================================== */
 
 app.get("/api/db-test", (req, res) => {
@@ -157,7 +162,10 @@ app.get("/api/db-test", (req, res) => {
                     "DATABASE TEST ERROR:"
                 );
 
-                console.error(err);
+                console.error(
+                    err.message
+                );
+
 
                 return res.status(500).json({
 
@@ -192,46 +200,52 @@ app.get("/api/db-test", (req, res) => {
    GET ALL STUDENTS
 ===================================================== */
 
-app.get("/api/students", (req, res) => {
+app.get(
+    "/api/students",
+    (req, res) => {
 
-    const sql = `
-        SELECT *
-        FROM students
-        ORDER BY id DESC
-    `;
+        const sql = `
+            SELECT *
+            FROM students
+            ORDER BY id DESC
+        `;
 
 
-    db.query(
-        sql,
-        (err, results) => {
+        db.query(
+            sql,
+            (err, results) => {
 
-            if (err) {
+                if (err) {
 
-                console.error(
-                    "GET STUDENTS ERROR:"
-                );
+                    console.error(
+                        "GET STUDENTS ERROR:"
+                    );
 
-                console.error(err);
-
-                return res.status(500).json({
-
-                    message:
-                        "Database error",
-
-                    error:
+                    console.error(
                         err.message
+                    );
 
-                });
+
+                    return res.status(500).json({
+
+                        message:
+                            "Database error",
+
+                        error:
+                            err.message
+
+                    });
+
+                }
+
+
+                res.json(results);
 
             }
+        );
 
-
-            res.json(results);
-
-        }
-    );
-
-});
+    }
+);
 
 
 /* =====================================================
@@ -242,7 +256,8 @@ app.get(
     "/api/students/:id",
     (req, res) => {
 
-        const id = req.params.id;
+        const id =
+            req.params.id;
 
 
         const sql = `
@@ -263,7 +278,10 @@ app.get(
                         "GET STUDENT ERROR:"
                     );
 
-                    console.error(err);
+                    console.error(
+                        err.message
+                    );
+
 
                     return res.status(500).json({
 
@@ -304,7 +322,7 @@ app.get(
 
 
 /* =====================================================
-   ADD NEW STUDENT
+   ADD STUDENT
 ===================================================== */
 
 app.post(
@@ -317,8 +335,6 @@ app.post(
             course
         } = req.body;
 
-
-        /* ---------- VALIDATION ---------- */
 
         if (
             !name ||
@@ -335,8 +351,6 @@ app.post(
 
         }
 
-
-        /* ---------- INSERT ---------- */
 
         const sql = `
             INSERT INTO students
@@ -360,7 +374,10 @@ app.post(
                         "ADD STUDENT ERROR:"
                     );
 
-                    console.error(err);
+                    console.error(
+                        err.message
+                    );
+
 
                     return res.status(500).json({
 
@@ -424,8 +441,6 @@ app.put(
         } = req.body;
 
 
-        /* ---------- VALIDATION ---------- */
-
         if (
             !name ||
             !email ||
@@ -441,8 +456,6 @@ app.put(
 
         }
 
-
-        /* ---------- UPDATE ---------- */
 
         const sql = `
             UPDATE students
@@ -470,7 +483,10 @@ app.put(
                         "UPDATE STUDENT ERROR:"
                     );
 
-                    console.error(err);
+                    console.error(
+                        err.message
+                    );
+
 
                     return res.status(500).json({
 
@@ -541,8 +557,6 @@ app.delete(
             req.params.id;
 
 
-        /* ---------- FIND STUDENT FIRST ---------- */
-
         const selectSql = `
             SELECT *
             FROM students
@@ -561,7 +575,10 @@ app.delete(
                         "GET BEFORE DELETE ERROR:"
                     );
 
-                    console.error(err);
+                    console.error(
+                        err.message
+                    );
+
 
                     return res.status(500).json({
 
@@ -594,8 +611,6 @@ app.delete(
                     results[0];
 
 
-                /* ---------- DELETE ---------- */
-
                 const deleteSql = `
                     DELETE FROM students
                     WHERE id = ?
@@ -613,7 +628,10 @@ app.delete(
                                 "DELETE STUDENT ERROR:"
                             );
 
-                            console.error(err);
+                            console.error(
+                                err.message
+                            );
+
 
                             return res.status(500).json({
 
@@ -680,7 +698,10 @@ app.use(
             "SERVER ERROR:"
         );
 
-        console.error(err);
+        console.error(
+            err.message
+        );
+
 
         res.status(500).json({
 
