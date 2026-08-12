@@ -1,17 +1,12 @@
 require("dotenv").config();
 
-// ========================================
-// STUDENT MANAGEMENT SYSTEM - SERVER.JS
-// ========================================
-
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
 
 const app = express();
 
-// Railway provides PORT automatically.
-// Local system par 3000 use hoga.
+// Railway provides PORT automatically
 const PORT = process.env.PORT || 3000;
 
 // ========================================
@@ -22,48 +17,35 @@ app.use(cors());
 app.use(express.json());
 
 // ========================================
-// MYSQL DATABASE CONNECTION
+// MYSQL CONNECTION POOL
 // ========================================
 
-// Local PC:
-// DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
-//
-// Railway:
-// MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
-
-const db = mysql.createConnection({
+const db = mysql.createPool({
     host: process.env.MYSQLHOST || process.env.DB_HOST,
-
-    port: process.env.MYSQLPORT
-        ? Number(process.env.MYSQLPORT)
-        : 3306,
-
+    port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
     user: process.env.MYSQLUSER || process.env.DB_USER,
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD,
+    database: process.env.MYSQLDATABASE || process.env.DB_NAME,
 
-    password:
-        process.env.MYSQLPASSWORD ||
-        process.env.DB_PASSWORD,
-
-    database:
-        process.env.MYSQLDATABASE ||
-        process.env.DB_NAME
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 // ========================================
-// CONNECT TO MYSQL
+// TEST DATABASE CONNECTION
 // ========================================
 
-db.connect((err) => {
-    if (err) {
-        console.error(
-            "MySQL connection failed:",
-            err.message
-        );
+db.getConnection((err, connection) => {
 
+    if (err) {
+        console.error("MySQL connection failed:", err.message);
         return;
     }
 
     console.log("MySQL connected successfully!");
+
+    connection.release();
 });
 
 // ========================================
@@ -71,10 +53,12 @@ db.connect((err) => {
 // ========================================
 
 app.get("/", (req, res) => {
+
     res.json({
         message: "Student Management API is running",
         status: "online"
     });
+
 });
 
 // ========================================
@@ -82,9 +66,39 @@ app.get("/", (req, res) => {
 // ========================================
 
 app.get("/api/test", (req, res) => {
+
     res.json({
-        message: "Backend is working successfully"
+        message: "Backend is working"
     });
+
+});
+
+// ========================================
+// DATABASE TEST ROUTE
+// ========================================
+
+app.get("/api/db-test", (req, res) => {
+
+    db.query("SELECT 1 AS database_test", (err, results) => {
+
+        if (err) {
+
+            console.error("DATABASE TEST ERROR:", err);
+
+            return res.status(500).json({
+                message: "Database connection failed",
+                error: err.message
+            });
+
+        }
+
+        res.json({
+            message: "Database connection is working",
+            result: results
+        });
+
+    });
+
 });
 
 // ========================================
@@ -92,23 +106,26 @@ app.get("/api/test", (req, res) => {
 // ========================================
 
 app.get("/api/students", (req, res) => {
+
     const sql = "SELECT * FROM students";
 
     db.query(sql, (err, results) => {
+
         if (err) {
-            console.error(
-                "GET STUDENTS ERROR:",
-                err.message
-            );
+
+            console.error("GET STUDENTS ERROR:", err);
 
             return res.status(500).json({
                 message: "Database error",
                 error: err.message
             });
+
         }
 
         res.json(results);
+
     });
+
 });
 
 // ========================================
@@ -116,32 +133,36 @@ app.get("/api/students", (req, res) => {
 // ========================================
 
 app.get("/api/students/:id", (req, res) => {
+
     const id = req.params.id;
 
-    const sql =
-        "SELECT * FROM students WHERE id = ?";
+    const sql = "SELECT * FROM students WHERE id = ?";
 
     db.query(sql, [id], (err, results) => {
+
         if (err) {
-            console.error(
-                "GET STUDENT ERROR:",
-                err.message
-            );
+
+            console.error("GET STUDENT ERROR:", err);
 
             return res.status(500).json({
                 message: "Database error",
                 error: err.message
             });
+
         }
 
         if (results.length === 0) {
+
             return res.status(404).json({
                 message: "Student not found"
             });
+
         }
 
         res.json(results[0]);
+
     });
+
 });
 
 // ========================================
@@ -149,14 +170,15 @@ app.get("/api/students/:id", (req, res) => {
 // ========================================
 
 app.post("/api/students", (req, res) => {
+
     const { name, email, course } = req.body;
 
-    // Validation
     if (!name || !email || !course) {
+
         return res.status(400).json({
-            message:
-                "Name, email and course are required"
+            message: "Name, email and course are required"
         });
+
     }
 
     const sql = `
@@ -169,21 +191,21 @@ app.post("/api/students", (req, res) => {
         sql,
         [name, email, course],
         (err, result) => {
+
             if (err) {
-                console.error(
-                    "ADD STUDENT ERROR:",
-                    err.message
-                );
+
+                console.error("ADD STUDENT ERROR:", err);
 
                 return res.status(500).json({
                     message: "Database error",
                     error: err.message
                 });
+
             }
 
             res.status(201).json({
-                message:
-                    "Student added successfully",
+
+                message: "Student added successfully",
 
                 student: {
                     id: result.insertId,
@@ -191,9 +213,12 @@ app.post("/api/students", (req, res) => {
                     email: email,
                     course: course
                 }
+
             });
+
         }
     );
+
 });
 
 // ========================================
@@ -201,16 +226,17 @@ app.post("/api/students", (req, res) => {
 // ========================================
 
 app.put("/api/students/:id", (req, res) => {
+
     const id = req.params.id;
 
     const { name, email, course } = req.body;
 
-    // Validation
     if (!name || !email || !course) {
+
         return res.status(400).json({
-            message:
-                "Name, email and course are required"
+            message: "Name, email and course are required"
         });
+
     }
 
     const sql = `
@@ -223,27 +249,29 @@ app.put("/api/students/:id", (req, res) => {
         sql,
         [name, email, course, id],
         (err, result) => {
+
             if (err) {
-                console.error(
-                    "UPDATE STUDENT ERROR:",
-                    err.message
-                );
+
+                console.error("UPDATE STUDENT ERROR:", err);
 
                 return res.status(500).json({
                     message: "Database error",
                     error: err.message
                 });
+
             }
 
             if (result.affectedRows === 0) {
+
                 return res.status(404).json({
                     message: "Student not found"
                 });
+
             }
 
             res.json({
-                message:
-                    "Student updated successfully",
+
+                message: "Student updated successfully",
 
                 student: {
                     id: Number(id),
@@ -251,19 +279,23 @@ app.put("/api/students/:id", (req, res) => {
                     email: email,
                     course: course
                 }
+
             });
+
         }
     );
+
 });
 
 // ========================================
-// DELETE - DELETE STUDENT
+// DELETE STUDENT
 // ========================================
 
 app.delete("/api/students/:id", (req, res) => {
+
     const id = req.params.id;
 
-    // First get student
+    // First find the student
     const selectSql =
         "SELECT * FROM students WHERE id = ?";
 
@@ -271,22 +303,24 @@ app.delete("/api/students/:id", (req, res) => {
         selectSql,
         [id],
         (err, results) => {
+
             if (err) {
-                console.error(
-                    "GET BEFORE DELETE ERROR:",
-                    err.message
-                );
+
+                console.error("GET BEFORE DELETE ERROR:", err);
 
                 return res.status(500).json({
                     message: "Database error",
                     error: err.message
                 });
+
             }
 
             if (results.length === 0) {
+
                 return res.status(404).json({
                     message: "Student not found"
                 });
+
             }
 
             const student = results[0];
@@ -299,40 +333,42 @@ app.delete("/api/students/:id", (req, res) => {
                 deleteSql,
                 [id],
                 (err, result) => {
+
                     if (err) {
-                        console.error(
-                            "DELETE STUDENT ERROR:",
-                            err.message
-                        );
+
+                        console.error("DELETE STUDENT ERROR:", err);
 
                         return res.status(500).json({
                             message: "Database error",
                             error: err.message
                         });
+
                     }
 
                     res.json({
-                        message:
-                            "Student deleted successfully",
+
+                        message: "Student deleted successfully",
 
                         student: student
+
                     });
+
                 }
             );
+
         }
     );
+
 });
 
 // ========================================
 // START SERVER
 // ========================================
 
-app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-        console.log(
-            `Server running on port ${PORT}`
-        );
-    }
-);
+app.listen(PORT, () => {
+
+    console.log(
+        `Server running on port ${PORT}`
+    );
+
+});
