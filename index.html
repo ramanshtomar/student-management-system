@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Spider-Man Student Management System</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- =====================================================
+     SPIDER-MAN INTRO
+===================================================== -->
+
+<div id="introScreen" class="intro-screen">
+
+    <div class="web web-1"></div>
+    <div class="web web-2"></div>
+    <div class="web web-3"></div>
+
+    <div class="intro-card">
+
+        <div class="spidey-image"></div>
+
+        <div class="intro-content">
+
+            <div class="intro-badge">
+                🕷️ STUDENT MANAGEMENT SYSTEM
+            </div>
+
+            <h1>
+                Welcome
+            </h1>
+
+            <p class="intro-subtitle">
+                Your student dashboard is ready.
+            </p>
+
+            <div class="intro-user">
+                Welcome back,
+                <span id="introName">User</span>
+                👋
+            </div>
+
+            <button
+                id="enterDashboardBtn"
+                class="intro-button">
+
+                Enter Dashboard →
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     APP
+===================================================== -->
+
+<div id="app" class="app hidden">
+
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                🕷️
+            </div>
+
+            <div>
+                <h2>
+                    Spider<span>MS</span>
+                </h2>
+
+                <small>
+                    Student Management
+                </small>
+            </div>
+
+        </div>
+
+
+        <nav class="navigation">
+
+            <button
+                class="nav-item active"
+                data-section="dashboard">
+
+                <span>⌂</span>
+                Dashboard
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-section="students">
+
+                <span>♙</span>
+                Students
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-section="analytics">
+
+                <span>◈</span>
+                Analytics
+
+            </button>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <button
+                class="nav-item"
+                data-section="settings">
+
+                <span>⚙</span>
+                Settings
+
+            </button>
+
+
+            <div class="sidebar-status">
+
+                <span class="status-dot"></span>
+
+                System Online
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =================================================
+         MAIN CONTENT
+    ================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <p class="page-label">
+                    SPIDER-MAN STUDENT SYSTEM
+                </p>
+
+                <h1 id="pageTitle">
+                    Dashboard
+                </h1>
+
+            </div>
+
+
+            <div class="live-info">
+
+                <div class="date-box">
+
+                    <strong id="liveDate">
+                        Loading...
+                    </strong>
+
+                    <span id="liveTime">
+                        00:00:00
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="avatar"
+                    id="userAvatar">
+
+                    U
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             DASHBOARD
+        ================================================== -->
+
+        <section
+            id="dashboardSection"
+            class="page-section active-section">
+
+
+            <div class="welcome-card">
+
+                <div>
+
+                    <p
+                        id="greeting"
+                        class="greeting">
+
+                        Good Morning ☀️
+
+                    </p>
+
+
+                    <h2>
+                        Welcome back,
+                        <span id="dashboardName">
+                            User
+                        </span>
+                        🕷️
+                    </h2>
+
+
+                    <p class="welcome-text">
+
+                        Your Spider-Man themed student
+                        management system is ready.
+
+                    </p>
+
+                </div>
+
+
+                <div class="welcome-icon">
+                    🕷️
+                </div>
+
+            </div>
+
+
+
+            <!-- STATISTICS -->
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon purple">
+                        👨‍🎓
+                    </div>
+
+                    <div>
+
+                        <p>
+                            Total Students
+                        </p>
+
+                        <h3 id="totalStudents">
+                            0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+                        📚
+                    </div>
+
+                    <div>
+
+                        <p>
+                            Total Courses
+                        </p>
+
+                        <h3 id="totalCourses">
+                            0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+                        ✓
+                    </div>
+
+                    <div>
+
+                        <p>
+                            System Status
+                        </p>
+
+                        <h3 class="online-text">
+                            Online
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- OVERVIEW -->
+
+            <div class="content-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <p class="section-label">
+                            OVERVIEW
+                        </p>
+
+                        <h2>
+                            Recent Students
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        class="small-btn"
+                        onclick="showSection('students')">
+
+                        View All →
+
+                    </button>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Course</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="overviewTableBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             STUDENTS
+        ================================================== -->
+
+        <section
+            id="studentsSection"
+            class="page-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="section-label">
+                        MANAGEMENT
+                    </p>
+
+                    <h2>
+                        Students
+                    </h2>
+
+                    <p>
+                        Manage all student records
+                        from one place.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ADD STUDENT -->
+
+            <div class="content-card add-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <p class="section-label">
+                            NEW RECORD
+                        </p>
+
+                        <h2>
+                            Add Student
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="studentForm"
+                    class="student-form">
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="name"
+                            placeholder="Enter student name"
+                            required>
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Enter email"
+                            required>
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Course
+                        </label>
+
+                        <input
+                            type="text"
+                            id="course"
+                            placeholder="Enter course"
+                            required>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="primary-btn">
+
+                        + Add Student
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- SEARCH -->
+
+            <div class="content-card">
+
+                <div class="search-row">
+
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="🔍 Search students...">
+
+
+                    <select id="courseFilter">
+
+                        <option value="all">
+                            All Courses
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- STUDENT TABLE -->
+
+            <div class="content-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <p class="section-label">
+                            DATABASE
+                        </p>
+
+                        <h2>
+                            Student List
+                        </h2>
+
+                    </div>
+
+
+                    <span
+                        class="record-count"
+                        id="recordCount">
+
+                        0 Records
+
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Course</th>
+                                <th>Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="studentTableBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             ANALYTICS
+        ================================================== -->
+
+        <section
+            id="analyticsSection"
+            class="page-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="section-label">
+                        INSIGHTS
+                    </p>
+
+                    <h2>
+                        Analytics
+                    </h2>
+
+                    <p>
+                        Understand your student database
+                        at a glance.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="analytics-grid">
+
+
+                <div class="analytics-stat">
+
+                    <span>
+                        👨‍🎓
+                    </span>
+
+                    <p>
+                        Total Students
+                    </p>
+
+                    <h3 id="analyticsStudents">
+                        0
+                    </h3>
+
+                </div>
+
+
+
+                <div class="analytics-stat">
+
+                    <span>
+                        📚
+                    </span>
+
+                    <p>
+                        Active Courses
+                    </p>
+
+                    <h3 id="analyticsCourses">
+                        0
+                    </h3>
+
+                </div>
+
+
+
+                <div class="analytics-stat">
+
+                    <span>
+                        📈
+                    </span>
+
+                    <p>
+                        Records
+                    </p>
+
+                    <h3 id="analyticsRecords">
+                        0
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+
+            <div
+                class="content-card analytics-card">
+
+
+                <div class="card-header">
+
+                    <div>
+
+                        <p class="section-label">
+                            COURSE DISTRIBUTION
+                        </p>
+
+                        <h2>
+                            Student Overview
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div id="courseOverview">
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SETTINGS
+        ================================================== -->
+
+        <section
+            id="settingsSection"
+            class="page-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="section-label">
+                        PREFERENCES
+                    </p>
+
+                    <h2>
+                        Settings
+                    </h2>
+
+                    <p>
+                        Student Management System
+                        configuration.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div
+                class="content-card settings-card">
+
+
+                <div class="setting-row">
+
+                    <div>
+
+                        <h3>
+                            System Status
+                        </h3>
+
+                        <p>
+                            Backend and database
+                            connection
+                        </p>
+
+                    </div>
+
+
+                    <span class="system-badge">
+                        ● Online
+                    </span>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div>
+
+                        <h3>
+                            Database
+                        </h3>
+
+                        <p>
+                            MySQL Student Management
+                            Database
+                        </p>
+
+                    </div>
+
+
+                    <span class="setting-value">
+                        MySQL
+                    </span>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div>
+
+                        <h3>
+                            Backend
+                        </h3>
+
+                        <p>
+                            Node.js + Express REST API
+                        </p>
+
+                    </div>
+
+
+                    <span class="setting-value">
+                        API
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+
+<!-- =====================================================
+     EDIT MODAL
+===================================================== -->
+
+<div
+    id="editModal"
+    class="modal">
+
+
+    <div class="modal-box">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <p class="section-label">
+                    UPDATE RECORD
+                </p>
+
+                <h2>
+                    Edit Student
+                </h2>
+
+            </div>
+
+
+            <button
+                class="close-modal"
+                onclick="closeEditModal()">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <input
+            type="hidden"
+            id="editId">
+
+
+        <div class="input-group">
+
+            <label>
+                Name
+            </label>
+
+            <input
+                type="text"
+                id="editName">
+
+        </div>
+
+
+        <div class="input-group">
+
+            <label>
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="editEmail">
+
+        </div>
+
+
+        <div class="input-group">
+
+            <label>
+                Course
+            </label>
+
+            <input
+                type="text"
+                id="editCourse">
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="cancel-btn"
+                onclick="closeEditModal()">
+
+                Cancel
+
+            </button>
+
+
+            <button
+                class="primary-btn"
+                onclick="saveEdit()">
+
+                Save Changes
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     TOAST
+===================================================== -->
+
+<div
+    id="toast"
+    class="toast">
+
+    <span id="toastMessage">
+        Success
+    </span>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
