@@ -17,26 +17,23 @@ app.use(express.json());
 
 
 // ========================================
-// DATABASE CONNECTION
+// MYSQL CONNECTION
 // ========================================
 
 function createDatabaseConnection() {
 
-    const mysqlUrl = process.env.MYSQL_URL;
+    return mysql.createConnection({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME
+    });
 
-    if (!mysqlUrl) {
-
-        console.error("MYSQL_URL is missing");
-
-        return null;
-    }
-
-    return mysql.createConnection(mysqlUrl);
 }
 
 
 // ========================================
-// HOME ROUTE
+// HOME
 // ========================================
 
 app.get("/", (req, res) => {
@@ -49,7 +46,7 @@ app.get("/", (req, res) => {
 
 
 // ========================================
-// BACKEND TEST ROUTE
+// BACKEND TEST
 // ========================================
 
 app.get("/api/test", (req, res) => {
@@ -62,56 +59,71 @@ app.get("/api/test", (req, res) => {
 
 
 // ========================================
-// DATABASE TEST ROUTE
+// DATABASE TEST
 // ========================================
 
 app.get("/api/db-test", (req, res) => {
 
-    const connection = createDatabaseConnection();
+    const db = createDatabaseConnection();
 
-    if (!connection) {
-
-        return res.status(500).json({
-            message: "MYSQL_URL is missing"
-        });
-
-    }
-
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
-            console.error("DATABASE CONNECTION ERROR:", err);
+            console.error(
+                "MYSQL CONNECTION ERROR:",
+                err
+            );
 
             return res.status(500).json({
-                message: "Database connection failed",
-                error: err.message,
-                code: err.code,
-                errno: err.errno,
-                sqlState: err.sqlState
+
+                message:
+                    "Database connection failed",
+
+                error:
+                    err.message,
+
+                code:
+                    err.code
+
             });
 
         }
 
-        connection.query(
+
+        db.query(
             "SELECT 1 AS test",
             (queryError, results) => {
 
-                connection.end();
+                db.end();
+
 
                 if (queryError) {
 
                     return res.status(500).json({
-                        message: "Database query failed",
-                        error: queryError.message,
-                        code: queryError.code
+
+                        message:
+                            "Database query failed",
+
+                        error:
+                            queryError.message,
+
+                        code:
+                            queryError.code
+
                     });
 
                 }
 
+
                 res.json({
-                    message: "Database connected successfully",
-                    result: results
+
+                    message:
+                        "Database connected successfully",
+
+                    result:
+                        results
+
                 });
 
             }
@@ -123,38 +135,32 @@ app.get("/api/db-test", (req, res) => {
 
 
 // ========================================
-// DATABASE SETUP ROUTE
-// ONE-TIME USE
+// CREATE STUDENTS TABLE
 // ========================================
 
 app.get("/api/setup-database", (req, res) => {
 
-    const connection = createDatabaseConnection();
+    const db = createDatabaseConnection();
 
-    if (!connection) {
-
-        return res.status(500).json({
-            message: "MYSQL_URL is missing"
-        });
-
-    }
-
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
-            console.error(
-                "DATABASE CONNECTION ERROR:",
-                err
-            );
-
             return res.status(500).json({
-                message: "Database connection failed",
-                error: err.message,
-                code: err.code
+
+                message:
+                    "Database connection failed",
+
+                error:
+                    err.message,
+
+                code:
+                    err.code
+
             });
 
         }
+
 
         const sql = `
 
@@ -177,43 +183,38 @@ app.get("/api/setup-database", (req, res) => {
 
         `;
 
-        connection.query(
-            sql,
-            (queryError) => {
 
-                connection.end();
+        db.query(sql, (queryError) => {
 
-                if (queryError) {
+            db.end();
 
-                    console.error(
-                        "TABLE CREATION ERROR:",
-                        queryError
-                    );
 
-                    return res.status(500).json({
+            if (queryError) {
 
-                        message:
-                            "Table creation failed",
-
-                        error:
-                            queryError.message,
-
-                        code:
-                            queryError.code
-
-                    });
-
-                }
-
-                res.json({
+                return res.status(500).json({
 
                     message:
-                        "Students table created successfully"
+                        "Table creation failed",
+
+                    error:
+                        queryError.message,
+
+                    code:
+                        queryError.code
 
                 });
 
             }
-        );
+
+
+            res.json({
+
+                message:
+                    "Students table created successfully"
+
+            });
+
+        });
 
     });
 
@@ -226,17 +227,10 @@ app.get("/api/setup-database", (req, res) => {
 
 app.get("/api/students", (req, res) => {
 
-    const connection = createDatabaseConnection();
+    const db = createDatabaseConnection();
 
-    if (!connection) {
 
-        return res.status(500).json({
-            message: "MYSQL_URL is missing"
-        });
-
-    }
-
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
@@ -255,23 +249,20 @@ app.get("/api/students", (req, res) => {
 
         }
 
+
         const sql = `
-            SELECT
-                id,
-                name,
-                email,
-                course,
-                age,
-                created_at
+            SELECT *
             FROM students
             ORDER BY id DESC
         `;
 
-        connection.query(
+
+        db.query(
             sql,
             (queryError, results) => {
 
-                connection.end();
+                db.end();
+
 
                 if (queryError) {
 
@@ -289,6 +280,7 @@ app.get("/api/students", (req, res) => {
                     });
 
                 }
+
 
                 res.json(results);
 
@@ -308,18 +300,10 @@ app.get("/api/students/:id", (req, res) => {
 
     const id = req.params.id;
 
-    const connection =
-        createDatabaseConnection();
+    const db = createDatabaseConnection();
 
-    if (!connection) {
 
-        return res.status(500).json({
-            message: "MYSQL_URL is missing"
-        });
-
-    }
-
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
@@ -338,24 +322,18 @@ app.get("/api/students/:id", (req, res) => {
 
         }
 
-        const sql = `
-            SELECT
-                id,
-                name,
-                email,
-                course,
-                age,
-                created_at
-            FROM students
-            WHERE id = ?
-        `;
 
-        connection.query(
+        const sql =
+            "SELECT * FROM students WHERE id = ?";
+
+
+        db.query(
             sql,
             [id],
             (queryError, results) => {
 
-                connection.end();
+                db.end();
+
 
                 if (queryError) {
 
@@ -374,6 +352,7 @@ app.get("/api/students/:id", (req, res) => {
 
                 }
 
+
                 if (results.length === 0) {
 
                     return res.status(404).json({
@@ -384,6 +363,7 @@ app.get("/api/students/:id", (req, res) => {
                     });
 
                 }
+
 
                 res.json(results[0]);
 
@@ -396,8 +376,7 @@ app.get("/api/students/:id", (req, res) => {
 
 
 // ========================================
-// ADD NEW STUDENT
-// POST /api/students
+// ADD STUDENT
 // ========================================
 
 app.post("/api/students", (req, res) => {
@@ -422,19 +401,10 @@ app.post("/api/students", (req, res) => {
     }
 
 
-    const connection =
-        createDatabaseConnection();
-
-    if (!connection) {
-
-        return res.status(500).json({
-            message: "MYSQL_URL is missing"
-        });
-
-    }
+    const db = createDatabaseConnection();
 
 
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
@@ -464,7 +434,7 @@ app.post("/api/students", (req, res) => {
         `;
 
 
-        connection.query(
+        db.query(
 
             sql,
 
@@ -477,16 +447,10 @@ app.post("/api/students", (req, res) => {
 
             (queryError, result) => {
 
-                connection.end();
+                db.end();
 
 
                 if (queryError) {
-
-                    console.error(
-                        "ADD STUDENT ERROR:",
-                        queryError
-                    );
-
 
                     if (
                         queryError.code ===
@@ -529,14 +493,9 @@ app.post("/api/students", (req, res) => {
                         id:
                             result.insertId,
 
-                        name:
-                            name,
-
-                        email:
-                            email,
-
-                        course:
-                            course,
+                        name,
+                        email,
+                        course,
 
                         age:
                             age || null
@@ -546,7 +505,6 @@ app.post("/api/students", (req, res) => {
                 });
 
             }
-
         );
 
     });
@@ -556,7 +514,6 @@ app.post("/api/students", (req, res) => {
 
 // ========================================
 // UPDATE STUDENT
-// PUT /api/students/:id
 // ========================================
 
 app.put("/api/students/:id", (req, res) => {
@@ -583,23 +540,10 @@ app.put("/api/students/:id", (req, res) => {
     }
 
 
-    const connection =
-        createDatabaseConnection();
+    const db = createDatabaseConnection();
 
 
-    if (!connection) {
-
-        return res.status(500).json({
-
-            message:
-                "MYSQL_URL is missing"
-
-        });
-
-    }
-
-
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
@@ -634,7 +578,7 @@ app.put("/api/students/:id", (req, res) => {
         `;
 
 
-        connection.query(
+        db.query(
 
             sql,
 
@@ -648,7 +592,7 @@ app.put("/api/students/:id", (req, res) => {
 
             (queryError, result) => {
 
-                connection.end();
+                db.end();
 
 
                 if (queryError) {
@@ -708,14 +652,9 @@ app.put("/api/students/:id", (req, res) => {
                         id:
                             Number(id),
 
-                        name:
-                            name,
-
-                        email:
-                            email,
-
-                        course:
-                            course,
+                        name,
+                        email,
+                        course,
 
                         age:
                             age || null
@@ -725,7 +664,6 @@ app.put("/api/students/:id", (req, res) => {
                 });
 
             }
-
         );
 
     });
@@ -735,30 +673,16 @@ app.put("/api/students/:id", (req, res) => {
 
 // ========================================
 // DELETE STUDENT
-// DELETE /api/students/:id
 // ========================================
 
 app.delete("/api/students/:id", (req, res) => {
 
     const id = req.params.id;
 
-    const connection =
-        createDatabaseConnection();
+    const db = createDatabaseConnection();
 
 
-    if (!connection) {
-
-        return res.status(500).json({
-
-            message:
-                "MYSQL_URL is missing"
-
-        });
-
-    }
-
-
-    connection.connect((err) => {
+    db.connect((err) => {
 
         if (err) {
 
@@ -782,17 +706,16 @@ app.delete("/api/students/:id", (req, res) => {
             "SELECT * FROM students WHERE id = ?";
 
 
-        connection.query(
+        db.query(
 
             selectSql,
-
             [id],
 
             (queryError, results) => {
 
                 if (queryError) {
 
-                    connection.end();
+                    db.end();
 
                     return res.status(500).json({
 
@@ -812,7 +735,7 @@ app.delete("/api/students/:id", (req, res) => {
 
                 if (results.length === 0) {
 
-                    connection.end();
+                    db.end();
 
                     return res.status(404).json({
 
@@ -832,15 +755,14 @@ app.delete("/api/students/:id", (req, res) => {
                     "DELETE FROM students WHERE id = ?";
 
 
-                connection.query(
+                db.query(
 
                     deleteSql,
-
                     [id],
 
                     (deleteError) => {
 
-                        connection.end();
+                        db.end();
 
 
                         if (deleteError) {
@@ -866,17 +788,14 @@ app.delete("/api/students/:id", (req, res) => {
                             message:
                                 "Student deleted successfully",
 
-                            student:
-                                student
+                            student
 
                         });
 
                     }
-
                 );
 
             }
-
         );
 
     });

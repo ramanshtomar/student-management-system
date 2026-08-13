@@ -1,6 +1,6 @@
 // =====================================================
 // SPIDER-MAN STUDENT MANAGEMENT SYSTEM
-// FINAL JAVASCRIPT
+// FINAL JAVASCRIPT - CRUD + DASHBOARD
 // =====================================================
 
 
@@ -190,6 +190,7 @@ function setupIntro() {
 
                     intro.style.display =
                         "none";
+
 
                     app.classList.remove(
                         "hidden"
@@ -476,17 +477,27 @@ async function loadStudents() {
             );
 
 
+        const data =
+            await response.json();
+
+
         if (!response.ok) {
 
             throw new Error(
+
+                data.error ||
+                data.message ||
                 "Failed to load students"
+
             );
 
         }
 
 
         students =
-            await response.json();
+            Array.isArray(data)
+                ? data
+                : [];
 
 
         renderStudents(
@@ -504,6 +515,7 @@ async function loadStudents() {
 
         updateCourseFilter();
 
+
     }
     catch (error) {
 
@@ -514,7 +526,8 @@ async function loadStudents() {
 
 
         showToast(
-            "Unable to load students"
+            "Unable to load students: " +
+            error.message
         );
 
     }
@@ -547,7 +560,7 @@ function renderStudents(
         "";
 
 
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
 
         tableBody.innerHTML = `
 
@@ -747,7 +760,7 @@ function renderOverview(
 
 
 // =====================================================
-// ADD STUDENT
+// ADD STUDENT FORM
 // =====================================================
 
 function setupStudentForm() {
@@ -772,6 +785,10 @@ function setupStudentForm() {
 
 }
 
+
+// =====================================================
+// ADD STUDENT
+// =====================================================
 
 async function addStudent(
     event
@@ -814,6 +831,26 @@ async function addStudent(
     }
 
 
+    const studentData = {
+
+        name:
+            name,
+
+        email:
+            email,
+
+        course:
+            course
+
+    };
+
+
+    console.log(
+        "Sending student:",
+        studentData
+    );
+
+
     try {
 
         const response =
@@ -821,7 +858,8 @@ async function addStudent(
                 API_URL,
                 {
 
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
 
@@ -832,11 +870,7 @@ async function addStudent(
 
                     body:
                         JSON.stringify(
-                            {
-                                name,
-                                email,
-                                course
-                            }
+                            studentData
                         )
 
                 }
@@ -847,11 +881,20 @@ async function addStudent(
             await response.json();
 
 
+        console.log(
+            "Add student response:",
+            data
+        );
+
+
         if (!response.ok) {
 
             throw new Error(
+
+                data.error ||
                 data.message ||
                 "Failed to add student"
+
             );
 
         }
@@ -880,12 +923,14 @@ async function addStudent(
     catch (error) {
 
         console.error(
+            "ADD STUDENT ERROR:",
             error
         );
 
 
         showToast(
-            "Error adding student"
+            "Error adding student: " +
+            error.message
         );
 
     }
@@ -921,33 +966,71 @@ async function editStudent(
     }
 
 
-    document.getElementById(
-        "editId"
-    ).value =
+    const editId =
+        document.getElementById(
+            "editId"
+        );
+
+
+    const editName =
+        document.getElementById(
+            "editName"
+        );
+
+
+    const editEmail =
+        document.getElementById(
+            "editEmail"
+        );
+
+
+    const editCourse =
+        document.getElementById(
+            "editCourse"
+        );
+
+
+    const modal =
+        document.getElementById(
+            "editModal"
+        );
+
+
+    if (
+        !editId ||
+        !editName ||
+        !editEmail ||
+        !editCourse ||
+        !modal
+    ) {
+
+        showToast(
+            "Edit form not found"
+        );
+
+
+        return;
+
+    }
+
+
+    editId.value =
         student.id;
 
 
-    document.getElementById(
-        "editName"
-    ).value =
+    editName.value =
         student.name;
 
 
-    document.getElementById(
-        "editEmail"
-    ).value =
+    editEmail.value =
         student.email;
 
 
-    document.getElementById(
-        "editCourse"
-    ).value =
+    editCourse.value =
         student.course;
 
 
-    document.getElementById(
-        "editModal"
-    ).classList.add(
+    modal.classList.add(
         "show"
     );
 
@@ -955,16 +1038,24 @@ async function editStudent(
 
 
 // =====================================================
-// CLOSE MODAL
+// CLOSE EDIT MODAL
 // =====================================================
 
 function closeEditModal() {
 
-    document.getElementById(
-        "editModal"
-    ).classList.remove(
-        "show"
-    );
+    const modal =
+        document.getElementById(
+            "editModal"
+        );
+
+
+    if (modal) {
+
+        modal.classList.remove(
+            "show"
+        );
+
+    }
 
 }
 
@@ -1000,6 +1091,7 @@ async function saveEdit() {
 
 
     if (
+        !id ||
         !name ||
         !email ||
         !course
@@ -1015,14 +1107,31 @@ async function saveEdit() {
     }
 
 
+    const updatedStudent = {
+
+        name:
+            name,
+
+        email:
+            email,
+
+        course:
+            course
+
+    };
+
+
     try {
 
         const response =
             await fetch(
+
                 `${API_URL}/${id}`,
+
                 {
 
-                    method: "PUT",
+                    method:
+                        "PUT",
 
                     headers: {
 
@@ -1033,14 +1142,11 @@ async function saveEdit() {
 
                     body:
                         JSON.stringify(
-                            {
-                                name,
-                                email,
-                                course
-                            }
+                            updatedStudent
                         )
 
                 }
+
             );
 
 
@@ -1048,12 +1154,20 @@ async function saveEdit() {
             await response.json();
 
 
+        console.log(
+            "Update response:",
+            data
+        );
+
+
         if (!response.ok) {
 
             throw new Error(
-                data.message ||
+
                 data.error ||
+                data.message ||
                 "Update failed"
+
             );
 
         }
@@ -1073,13 +1187,14 @@ async function saveEdit() {
     catch (error) {
 
         console.error(
-            "Edit error:",
+            "EDIT ERROR:",
             error
         );
 
 
         showToast(
-            "Error updating student"
+            "Error updating student: " +
+            error.message
         );
 
     }
@@ -1088,7 +1203,7 @@ async function saveEdit() {
 
 
 // =====================================================
-// DELETE
+// DELETE STUDENT
 // =====================================================
 
 async function deleteStudent(
@@ -1104,6 +1219,11 @@ async function deleteStudent(
 
 
     if (!student) {
+
+        showToast(
+            "Student not found"
+        );
+
 
         return;
 
@@ -1127,11 +1247,16 @@ async function deleteStudent(
 
         const response =
             await fetch(
+
                 `${API_URL}/${id}`,
+
                 {
+
                     method:
                         "DELETE"
+
                 }
+
             );
 
 
@@ -1139,11 +1264,20 @@ async function deleteStudent(
             await response.json();
 
 
+        console.log(
+            "Delete response:",
+            data
+        );
+
+
         if (!response.ok) {
 
             throw new Error(
+
+                data.error ||
                 data.message ||
                 "Delete failed"
+
             );
 
         }
@@ -1160,13 +1294,14 @@ async function deleteStudent(
     catch (error) {
 
         console.error(
-            "Delete error:",
+            "DELETE ERROR:",
             error
         );
 
 
         showToast(
-            "Error deleting student"
+            "Error deleting student: " +
+            error.message
         );
 
     }
@@ -1214,20 +1349,42 @@ function setupSearch() {
 }
 
 
+// =====================================================
+// APPLY SEARCH + FILTER
+// =====================================================
+
 function applyFilters() {
 
-    const search =
+    const searchElement =
         document.getElementById(
             "searchInput"
-        ).value
+        );
+
+
+    const courseElement =
+        document.getElementById(
+            "courseFilter"
+        );
+
+
+    if (
+        !searchElement ||
+        !courseElement
+    ) {
+
+        return;
+
+    }
+
+
+    const search =
+        searchElement.value
             .trim()
             .toLowerCase();
 
 
     const course =
-        document.getElementById(
-            "courseFilter"
-        ).value;
+        courseElement.value;
 
 
     const filtered =
@@ -1277,12 +1434,12 @@ function applyFilters() {
                 const matchesCourse =
 
                     course ===
-                        "all"
+                    "all"
 
                     ||
 
                     student.course ===
-                        course;
+                    course;
 
 
                 return (
@@ -1333,6 +1490,9 @@ function updateCourseFilter() {
                 )
             )
         ]
+        .filter(
+            Boolean
+        )
         .sort();
 
 
@@ -1701,7 +1861,7 @@ function showToast(
             );
 
         },
-        2500
+        3500
     );
 
 }
