@@ -8,11 +8,13 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
+
 // ========================================
 // MIDDLEWARE
 // ========================================
 
 app.use(cors());
+
 app.use(express.json());
 
 
@@ -22,11 +24,57 @@ app.use(express.json());
 
 function createDatabaseConnection() {
 
+    /*
+        RAILWAY
+        -------
+        Railway provides MYSQL_URL.
+
+        LOCAL
+        -----
+        Local .env uses:
+        DB_HOST
+        DB_USER
+        DB_PASSWORD
+        DB_NAME
+    */
+
+
+    if (
+        process.env.MYSQL_URL &&
+        process.env.MYSQL_URL.trim() !== ""
+    ) {
+
+        console.log(
+            "Using MYSQL_URL connection"
+        );
+
+
+        return mysql.createConnection(
+            process.env.MYSQL_URL
+        );
+
+    }
+
+
+    console.log(
+        "Using local DB_HOST connection"
+    );
+
+
     return mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
+
+        host:
+            process.env.DB_HOST,
+
+        user:
+            process.env.DB_USER,
+
+        password:
+            process.env.DB_PASSWORD,
+
+        database:
+            process.env.DB_NAME
+
     });
 
 }
@@ -39,7 +87,10 @@ function createDatabaseConnection() {
 app.get("/", (req, res) => {
 
     res.json({
-        message: "Student Management API is running"
+
+        message:
+            "Student Management API is running"
+
     });
 
 });
@@ -52,7 +103,10 @@ app.get("/", (req, res) => {
 app.get("/api/test", (req, res) => {
 
     res.json({
-        message: "Backend is working"
+
+        message:
+            "Backend is working"
+
     });
 
 });
@@ -64,7 +118,9 @@ app.get("/api/test", (req, res) => {
 
 app.get("/api/db-test", (req, res) => {
 
-    const db = createDatabaseConnection();
+    const db =
+        createDatabaseConnection();
+
 
     db.connect((err) => {
 
@@ -74,6 +130,7 @@ app.get("/api/db-test", (req, res) => {
                 "MYSQL CONNECTION ERROR:",
                 err
             );
+
 
             return res.status(500).json({
 
@@ -92,7 +149,9 @@ app.get("/api/db-test", (req, res) => {
 
 
         db.query(
+
             "SELECT 1 AS test",
+
             (queryError, results) => {
 
                 db.end();
@@ -127,6 +186,7 @@ app.get("/api/db-test", (req, res) => {
                 });
 
             }
+
         );
 
     });
@@ -138,679 +198,786 @@ app.get("/api/db-test", (req, res) => {
 // CREATE STUDENTS TABLE
 // ========================================
 
-app.get("/api/setup-database", (req, res) => {
+app.get(
+    "/api/setup-database",
+    (req, res) => {
 
-    const db = createDatabaseConnection();
-
-    db.connect((err) => {
-
-        if (err) {
-
-            return res.status(500).json({
-
-                message:
-                    "Database connection failed",
-
-                error:
-                    err.message,
-
-                code:
-                    err.code
-
-            });
-
-        }
+        const db =
+            createDatabaseConnection();
 
 
-        const sql = `
+        db.connect((err) => {
 
-            CREATE TABLE IF NOT EXISTS students (
-
-                id INT AUTO_INCREMENT PRIMARY KEY,
-
-                name VARCHAR(100) NOT NULL,
-
-                email VARCHAR(150) UNIQUE NOT NULL,
-
-                course VARCHAR(100) NOT NULL,
-
-                age INT,
-
-                created_at TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP
-
-            )
-
-        `;
-
-
-        db.query(sql, (queryError) => {
-
-            db.end();
-
-
-            if (queryError) {
+            if (err) {
 
                 return res.status(500).json({
 
                     message:
-                        "Table creation failed",
+                        "Database connection failed",
 
                     error:
-                        queryError.message,
+                        err.message,
 
                     code:
-                        queryError.code
+                        err.code
 
                 });
 
             }
 
 
-            res.json({
+            const sql = `
 
-                message:
-                    "Students table created successfully"
+                CREATE TABLE IF NOT EXISTS students (
 
-            });
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+
+                    name VARCHAR(100) NOT NULL,
+
+                    email VARCHAR(150) UNIQUE NOT NULL,
+
+                    course VARCHAR(100) NOT NULL,
+
+                    age INT,
+
+                    created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP
+
+                )
+
+            `;
+
+
+            db.query(
+                sql,
+                (queryError) => {
+
+                    db.end();
+
+
+                    if (queryError) {
+
+                        return res.status(500).json({
+
+                            message:
+                                "Table creation failed",
+
+                            error:
+                                queryError.message,
+
+                            code:
+                                queryError.code
+
+                        });
+
+                    }
+
+
+                    res.json({
+
+                        message:
+                            "Students table created successfully"
+
+                    });
+
+                }
+            );
 
         });
 
-    });
-
-});
+    }
+);
 
 
 // ========================================
 // GET ALL STUDENTS
 // ========================================
 
-app.get("/api/students", (req, res) => {
+app.get(
+    "/api/students",
+    (req, res) => {
 
-    const db = createDatabaseConnection();
-
-
-    db.connect((err) => {
-
-        if (err) {
-
-            return res.status(500).json({
-
-                message:
-                    "Database connection failed",
-
-                error:
-                    err.message,
-
-                code:
-                    err.code
-
-            });
-
-        }
+        const db =
+            createDatabaseConnection();
 
 
-        const sql = `
-            SELECT *
-            FROM students
-            ORDER BY id DESC
-        `;
+        db.connect((err) => {
+
+            if (err) {
+
+                return res.status(500).json({
+
+                    message:
+                        "Database connection failed",
+
+                    error:
+                        err.message,
+
+                    code:
+                        err.code
+
+                });
+
+            }
 
 
-        db.query(
-            sql,
-            (queryError, results) => {
+            const sql = `
 
-                db.end();
+                SELECT *
+
+                FROM students
+
+                ORDER BY id DESC
+
+            `;
 
 
-                if (queryError) {
+            db.query(
 
-                    return res.status(500).json({
+                sql,
 
-                        message:
-                            "Database error",
+                (queryError, results) => {
 
-                        error:
-                            queryError.message,
+                    db.end();
 
-                        code:
-                            queryError.code
 
-                    });
+                    if (queryError) {
+
+                        return res.status(500).json({
+
+                            message:
+                                "Database error",
+
+                            error:
+                                queryError.message,
+
+                            code:
+                                queryError.code
+
+                        });
+
+                    }
+
+
+                    res.json(results);
 
                 }
 
+            );
 
-                res.json(results);
+        });
 
-            }
-        );
-
-    });
-
-});
+    }
+);
 
 
 // ========================================
 // GET STUDENT BY ID
 // ========================================
 
-app.get("/api/students/:id", (req, res) => {
+app.get(
+    "/api/students/:id",
+    (req, res) => {
 
-    const id = req.params.id;
-
-    const db = createDatabaseConnection();
-
-
-    db.connect((err) => {
-
-        if (err) {
-
-            return res.status(500).json({
-
-                message:
-                    "Database connection failed",
-
-                error:
-                    err.message,
-
-                code:
-                    err.code
-
-            });
-
-        }
+        const id =
+            req.params.id;
 
 
-        const sql =
-            "SELECT * FROM students WHERE id = ?";
+        const db =
+            createDatabaseConnection();
 
 
-        db.query(
-            sql,
-            [id],
-            (queryError, results) => {
+        db.connect((err) => {
 
-                db.end();
+            if (err) {
 
+                return res.status(500).json({
 
-                if (queryError) {
+                    message:
+                        "Database connection failed",
 
-                    return res.status(500).json({
+                    error:
+                        err.message,
 
-                        message:
-                            "Database error",
+                    code:
+                        err.code
 
-                        error:
-                            queryError.message,
-
-                        code:
-                            queryError.code
-
-                    });
-
-                }
-
-
-                if (results.length === 0) {
-
-                    return res.status(404).json({
-
-                        message:
-                            "Student not found"
-
-                    });
-
-                }
-
-
-                res.json(results[0]);
+                });
 
             }
-        );
 
-    });
 
-});
+            const sql =
+                "SELECT * FROM students WHERE id = ?";
+
+
+            db.query(
+
+                sql,
+
+                [id],
+
+                (queryError, results) => {
+
+                    db.end();
+
+
+                    if (queryError) {
+
+                        return res.status(500).json({
+
+                            message:
+                                "Database error",
+
+                            error:
+                                queryError.message,
+
+                            code:
+                                queryError.code
+
+                        });
+
+                    }
+
+
+                    if (
+                        results.length === 0
+                    ) {
+
+                        return res.status(404).json({
+
+                            message:
+                                "Student not found"
+
+                        });
+
+                    }
+
+
+                    res.json(
+                        results[0]
+                    );
+
+                }
+
+            );
+
+        });
+
+    }
+);
 
 
 // ========================================
 // ADD STUDENT
 // ========================================
 
-app.post("/api/students", (req, res) => {
+app.post(
+    "/api/students",
+    (req, res) => {
 
-    const {
-        name,
-        email,
-        course,
-        age
-    } = req.body;
+        const {
 
+            name,
+            email,
+            course,
+            age
 
-    if (!name || !email || !course) {
-
-        return res.status(400).json({
-
-            message:
-                "Name, email and course are required"
-
-        });
-
-    }
+        } = req.body;
 
 
-    const db = createDatabaseConnection();
+        if (
+            !name ||
+            !email ||
+            !course
+        ) {
 
-
-    db.connect((err) => {
-
-        if (err) {
-
-            return res.status(500).json({
+            return res.status(400).json({
 
                 message:
-                    "Database connection failed",
-
-                error:
-                    err.message,
-
-                code:
-                    err.code
+                    "Name, email and course are required"
 
             });
 
         }
 
 
-        const sql = `
-
-            INSERT INTO students
-            (name, email, course, age)
-
-            VALUES (?, ?, ?, ?)
-
-        `;
+        const db =
+            createDatabaseConnection();
 
 
-        db.query(
+        db.connect((err) => {
 
-            sql,
+            if (err) {
 
-            [
-                name,
-                email,
-                course,
-                age || null
-            ],
-
-            (queryError, result) => {
-
-                db.end();
-
-
-                if (queryError) {
-
-                    if (
-                        queryError.code ===
-                        "ER_DUP_ENTRY"
-                    ) {
-
-                        return res.status(409).json({
-
-                            message:
-                                "Email already exists"
-
-                        });
-
-                    }
-
-
-                    return res.status(500).json({
-
-                        message:
-                            "Database error",
-
-                        error:
-                            queryError.message,
-
-                        code:
-                            queryError.code
-
-                    });
-
-                }
-
-
-                res.status(201).json({
+                return res.status(500).json({
 
                     message:
-                        "Student added successfully",
+                        "Database connection failed",
 
-                    student: {
+                    error:
+                        err.message,
 
-                        id:
-                            result.insertId,
-
-                        name,
-                        email,
-                        course,
-
-                        age:
-                            age || null
-
-                    }
+                    code:
+                        err.code
 
                 });
 
             }
-        );
 
-    });
 
-});
+            const sql = `
 
+                INSERT INTO students
 
-// ========================================
-// UPDATE STUDENT
-// ========================================
+                (
+                    name,
+                    email,
+                    course,
+                    age
+                )
 
-app.put("/api/students/:id", (req, res) => {
+                VALUES (?, ?, ?, ?)
 
-    const id = req.params.id;
+            `;
 
-    const {
-        name,
-        email,
-        course,
-        age
-    } = req.body;
 
+            db.query(
 
-    if (!name || !email || !course) {
+                sql,
 
-        return res.status(400).json({
+                [
 
-            message:
-                "Name, email and course are required"
+                    name,
+                    email,
+                    course,
+                    age || null
 
-        });
+                ],
 
-    }
-
-
-    const db = createDatabaseConnection();
-
-
-    db.connect((err) => {
-
-        if (err) {
-
-            return res.status(500).json({
-
-                message:
-                    "Database connection failed",
-
-                error:
-                    err.message,
-
-                code:
-                    err.code
-
-            });
-
-        }
-
-
-        const sql = `
-
-            UPDATE students
-
-            SET
-                name = ?,
-                email = ?,
-                course = ?,
-                age = ?
-
-            WHERE id = ?
-
-        `;
-
-
-        db.query(
-
-            sql,
-
-            [
-                name,
-                email,
-                course,
-                age || null,
-                id
-            ],
-
-            (queryError, result) => {
-
-                db.end();
-
-
-                if (queryError) {
-
-                    if (
-                        queryError.code ===
-                        "ER_DUP_ENTRY"
-                    ) {
-
-                        return res.status(409).json({
-
-                            message:
-                                "Email already exists"
-
-                        });
-
-                    }
-
-
-                    return res.status(500).json({
-
-                        message:
-                            "Database error",
-
-                        error:
-                            queryError.message,
-
-                        code:
-                            queryError.code
-
-                    });
-
-                }
-
-
-                if (
-                    result.affectedRows === 0
-                ) {
-
-                    return res.status(404).json({
-
-                        message:
-                            "Student not found"
-
-                    });
-
-                }
-
-
-                res.json({
-
-                    message:
-                        "Student updated successfully",
-
-                    student: {
-
-                        id:
-                            Number(id),
-
-                        name,
-                        email,
-                        course,
-
-                        age:
-                            age || null
-
-                    }
-
-                });
-
-            }
-        );
-
-    });
-
-});
-
-
-// ========================================
-// DELETE STUDENT
-// ========================================
-
-app.delete("/api/students/:id", (req, res) => {
-
-    const id = req.params.id;
-
-    const db = createDatabaseConnection();
-
-
-    db.connect((err) => {
-
-        if (err) {
-
-            return res.status(500).json({
-
-                message:
-                    "Database connection failed",
-
-                error:
-                    err.message,
-
-                code:
-                    err.code
-
-            });
-
-        }
-
-
-        const selectSql =
-            "SELECT * FROM students WHERE id = ?";
-
-
-        db.query(
-
-            selectSql,
-            [id],
-
-            (queryError, results) => {
-
-                if (queryError) {
+                (queryError, result) => {
 
                     db.end();
 
-                    return res.status(500).json({
 
-                        message:
-                            "Database error",
+                    if (queryError) {
 
-                        error:
-                            queryError.message,
+                        if (
+                            queryError.code ===
+                            "ER_DUP_ENTRY"
+                        ) {
 
-                        code:
-                            queryError.code
-
-                    });
-
-                }
-
-
-                if (results.length === 0) {
-
-                    db.end();
-
-                    return res.status(404).json({
-
-                        message:
-                            "Student not found"
-
-                    });
-
-                }
-
-
-                const student =
-                    results[0];
-
-
-                const deleteSql =
-                    "DELETE FROM students WHERE id = ?";
-
-
-                db.query(
-
-                    deleteSql,
-                    [id],
-
-                    (deleteError) => {
-
-                        db.end();
-
-
-                        if (deleteError) {
-
-                            return res.status(500).json({
+                            return res.status(409).json({
 
                                 message:
-                                    "Delete failed",
-
-                                error:
-                                    deleteError.message,
-
-                                code:
-                                    deleteError.code
+                                    "Email already exists"
 
                             });
 
                         }
 
 
-                        res.json({
+                        return res.status(500).json({
 
                             message:
-                                "Student deleted successfully",
+                                "Database error",
 
-                            student
+                            error:
+                                queryError.message,
+
+                            code:
+                                queryError.code
 
                         });
 
                     }
-                );
+
+
+                    res.status(201).json({
+
+                        message:
+                            "Student added successfully",
+
+                        student: {
+
+                            id:
+                                result.insertId,
+
+                            name,
+                            email,
+                            course,
+
+                            age:
+                                age || null
+
+                        }
+
+                    });
+
+                }
+
+            );
+
+        });
+
+    }
+);
+
+
+// ========================================
+// UPDATE STUDENT
+// ========================================
+
+app.put(
+    "/api/students/:id",
+    (req, res) => {
+
+        const id =
+            req.params.id;
+
+
+        const {
+
+            name,
+            email,
+            course,
+            age
+
+        } = req.body;
+
+
+        if (
+            !name ||
+            !email ||
+            !course
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    "Name, email and course are required"
+
+            });
+
+        }
+
+
+        const db =
+            createDatabaseConnection();
+
+
+        db.connect((err) => {
+
+            if (err) {
+
+                return res.status(500).json({
+
+                    message:
+                        "Database connection failed",
+
+                    error:
+                        err.message,
+
+                    code:
+                        err.code
+
+                });
 
             }
-        );
 
-    });
 
-});
+            const sql = `
+
+                UPDATE students
+
+                SET
+
+                    name = ?,
+
+                    email = ?,
+
+                    course = ?,
+
+                    age = ?
+
+                WHERE id = ?
+
+            `;
+
+
+            db.query(
+
+                sql,
+
+                [
+
+                    name,
+                    email,
+                    course,
+                    age || null,
+                    id
+
+                ],
+
+                (queryError, result) => {
+
+                    db.end();
+
+
+                    if (queryError) {
+
+                        if (
+                            queryError.code ===
+                            "ER_DUP_ENTRY"
+                        ) {
+
+                            return res.status(409).json({
+
+                                message:
+                                    "Email already exists"
+
+                            });
+
+                        }
+
+
+                        return res.status(500).json({
+
+                            message:
+                                "Database error",
+
+                            error:
+                                queryError.message,
+
+                            code:
+                                queryError.code
+
+                        });
+
+                    }
+
+
+                    if (
+                        result.affectedRows === 0
+                    ) {
+
+                        return res.status(404).json({
+
+                            message:
+                                "Student not found"
+
+                        });
+
+                    }
+
+
+                    res.json({
+
+                        message:
+                            "Student updated successfully",
+
+                        student: {
+
+                            id:
+                                Number(id),
+
+                            name,
+                            email,
+                            course,
+
+                            age:
+                                age || null
+
+                        }
+
+                    });
+
+                }
+
+            );
+
+        });
+
+    }
+);
+
+
+// ========================================
+// DELETE STUDENT
+// ========================================
+
+app.delete(
+    "/api/students/:id",
+    (req, res) => {
+
+        const id =
+            req.params.id;
+
+
+        const db =
+            createDatabaseConnection();
+
+
+        db.connect((err) => {
+
+            if (err) {
+
+                return res.status(500).json({
+
+                    message:
+                        "Database connection failed",
+
+                    error:
+                        err.message,
+
+                    code:
+                        err.code
+
+                });
+
+            }
+
+
+            const selectSql =
+                "SELECT * FROM students WHERE id = ?";
+
+
+            db.query(
+
+                selectSql,
+
+                [id],
+
+                (queryError, results) => {
+
+                    if (queryError) {
+
+                        db.end();
+
+
+                        return res.status(500).json({
+
+                            message:
+                                "Database error",
+
+                            error:
+                                queryError.message,
+
+                            code:
+                                queryError.code
+
+                        });
+
+                    }
+
+
+                    if (
+                        results.length === 0
+                    ) {
+
+                        db.end();
+
+
+                        return res.status(404).json({
+
+                            message:
+                                "Student not found"
+
+                        });
+
+                    }
+
+
+                    const student =
+                        results[0];
+
+
+                    const deleteSql =
+                        "DELETE FROM students WHERE id = ?";
+
+
+                    db.query(
+
+                        deleteSql,
+
+                        [id],
+
+                        (deleteError) => {
+
+                            db.end();
+
+
+                            if (deleteError) {
+
+                                return res.status(500).json({
+
+                                    message:
+                                        "Delete failed",
+
+                                    error:
+                                        deleteError.message,
+
+                                    code:
+                                        deleteError.code
+
+                                });
+
+                            }
+
+
+                            res.json({
+
+                                message:
+                                    "Student deleted successfully",
+
+                                student
+
+                            });
+
+                        }
+
+                    );
+
+                }
+
+            );
+
+        });
+
+    }
+);
 
 
 // ========================================
 // START SERVER
 // ========================================
 
-app.listen(PORT, () => {
+app.listen(
+    PORT,
+    () => {
 
-    console.log(
-        `Server running on port ${PORT}`
-    );
+        console.log(
+            `Server running on port ${PORT}`
+        );
 
-});
+
+        if (
+            process.env.MYSQL_URL &&
+            process.env.MYSQL_URL.trim() !== ""
+        ) {
+
+            console.log(
+                "MYSQL_URL detected - Railway/MySQL URL will be used"
+            );
+
+        }
+        else {
+
+            console.log(
+                "MYSQL_URL not detected - using DB_HOST/DB_USER/DB_PASSWORD/DB_NAME"
+            );
+
+        }
+
+    }
+);
